@@ -26,416 +26,264 @@ class MainActivity : AppCompatActivity() {
     private lateinit var root: LinearLayout
     private val prefs by lazy { getSharedPreferences("dream", Context.MODE_PRIVATE) }
 
-    private val bg = Color.rgb(4, 12, 24)
-    private val panel = Color.rgb(12, 29, 49)
-    private val panel2 = Color.rgb(18, 43, 70)
-    private val gold = Color.rgb(250, 183, 83)
+    private val bg = Color.rgb(3, 11, 22)
+    private val navy = Color.rgb(12, 30, 51)
+    private val navy2 = Color.rgb(20, 47, 77)
+    private val gold = Color.rgb(250, 184, 83)
     private val cream = Color.rgb(255, 248, 231)
-    private val muted = Color.rgb(157, 172, 195)
+    private val muted = Color.rgb(159, 175, 198)
+    private val pink = Color.rgb(244, 82, 140)
     private val green = Color.rgb(79, 201, 149)
-    private val pink = Color.rgb(242, 91, 140)
-    private val purple = Color.rgb(139, 96, 245)
+
+    private val langs = linkedMapOf("SK" to "sk", "EN" to "en", "DE" to "de", "CZ" to "cs", "PL" to "pl", "HU" to "hu", "ES" to "es", "FR" to "fr", "IT" to "it", "RO" to "ro")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = bg
         window.navigationBarColor = bg
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(bg)
-        }
+        root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(bg) }
         setContentView(root)
-        if ((prefs.getString("goal_name", "") ?: "").isBlank()) setupScreen() else dashboardScreen()
+        showHome()
     }
 
-    private fun clear() = root.removeAllViews()
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun lang() = prefs.getString("lang", "sk") ?: "sk"
-    private fun tr(sk: String, en: String) = if (lang() == "en") en else sk
-    private fun money(v: Double): String = NumberFormat.getCurrencyInstance(if (lang() == "en") Locale.UK else Locale("sk", "SK")).format(v)
+    private fun clear() = root.removeAllViews()
+
+    private fun tr(sk: String, en: String): String = when (lang()) {
+        "sk", "cs" -> sk
+        else -> en
+    }
+
+    private fun money(v: Double): String {
+        val locale = when (lang()) {
+            "sk" -> Locale("sk", "SK"); "cs" -> Locale("cs", "CZ"); "pl" -> Locale("pl", "PL")
+            "hu" -> Locale("hu", "HU"); "de" -> Locale.GERMANY; "fr" -> Locale.FRANCE
+            "it" -> Locale.ITALY; "es" -> Locale("es", "ES"); "ro" -> Locale("ro", "RO")
+            else -> Locale.UK
+        }
+        return NumberFormat.getCurrencyInstance(locale).format(v)
+    }
 
     private fun txt(s: String, size: Float = 16f, color: Int = cream, bold: Boolean = false) = TextView(this).apply {
-        text = s
-        textSize = size
-        setTextColor(color)
-        includeFontPadding = false
+        text = s; textSize = size; setTextColor(color); includeFontPadding = false
         typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
     }
 
-    private fun solid(color: Int, radius: Int = 24, stroke: Int? = null) = GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        setColor(color)
-        cornerRadius = dp(radius).toFloat()
-        if (stroke != null) setStroke(dp(1), stroke)
+    private fun shape(color: Int, radius: Int = 26, stroke: Int? = null) = GradientDrawable().apply {
+        setColor(color); cornerRadius = dp(radius).toFloat(); stroke?.let { setStroke(dp(1), it) }
     }
 
-    private fun gradient(colors: IntArray, radius: Int = 28, orientation: GradientDrawable.Orientation = GradientDrawable.Orientation.LEFT_RIGHT) =
-        GradientDrawable(orientation, colors).apply { cornerRadius = dp(radius).toFloat() }
+    private fun grad(colors: IntArray, radius: Int = 30) = GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, colors).apply { cornerRadius = dp(radius).toFloat() }
 
-    private fun cardBox(radius: Int = 26) = LinearLayout(this).apply {
+    private fun card() = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(20), dp(19), dp(20), dp(19))
-        background = gradient(intArrayOf(Color.rgb(20, 46, 75), Color.rgb(9, 26, 46)), radius, GradientDrawable.Orientation.TL_BR)
+        setPadding(dp(22), dp(20), dp(22), dp(20))
+        background = GradientDrawable(GradientDrawable.Orientation.TL_BR, intArrayOf(Color.rgb(25,55,88), Color.rgb(9,26,46))).apply { cornerRadius = dp(30).toFloat() }
         elevation = dp(3).toFloat()
-        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(7), dp(16), dp(7)) }
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(8), dp(16), dp(8)) }
     }
 
-    private fun button(label: String, onClick: () -> Unit) = Button(this).apply {
-        text = label
-        textSize = 15f
-        setTextColor(bg)
-        typeface = Typeface.DEFAULT_BOLD
-        isAllCaps = false
-        stateListAnimator = null
-        minHeight = 0
-        minimumHeight = 0
-        background = gradient(intArrayOf(Color.rgb(255, 204, 112), Color.rgb(247, 174, 77)), 30)
-        setPadding(dp(18), dp(14), dp(18), dp(14))
+    private fun button(label: String, accent: Boolean = false, onClick: () -> Unit) = Button(this).apply {
+        text = label; textSize = 15f; isAllCaps = false; typeface = Typeface.DEFAULT_BOLD; stateListAnimator = null
+        setTextColor(if (accent) Color.WHITE else bg)
+        background = if (accent) grad(intArrayOf(Color.rgb(255,176,82), pink)) else grad(intArrayOf(Color.rgb(255,205,113), Color.rgb(247,174,77)))
+        minHeight = 0; minimumHeight = 0
         setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(-1, dp(58)).apply { setMargins(dp(16), dp(8), dp(16), dp(8)) }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(62)).apply { setMargins(dp(16), dp(9), dp(16), dp(9)) }
     }
 
-    private fun accentButton(label: String, onClick: () -> Unit) = button(label, onClick).apply {
-        setTextColor(Color.WHITE)
-        background = gradient(intArrayOf(Color.rgb(255, 176, 82), Color.rgb(244, 83, 139)), 30)
-    }
-
-    private fun input(hintText: String, numeric: Boolean = false, scroll: ScrollView? = null) = EditText(this).apply {
-        hint = hintText
-        setHintTextColor(muted)
-        setTextColor(cream)
-        textSize = 16f
-        setSingleLine(true)
-        background = solid(panel2, 22, Color.rgb(185, 135, 70))
-        setPadding(dp(18), 0, dp(18), 0)
+    private fun input(hint: String, numeric: Boolean = false) = EditText(this).apply {
+        this.hint = hint; setHintTextColor(muted); setTextColor(cream); textSize = 17f; setSingleLine(true)
+        background = shape(navy2, 24, Color.rgb(179,132,72)); setPadding(dp(20), 0, dp(20), 0)
         if (numeric) inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-        layoutParams = LinearLayout.LayoutParams(-1, dp(64)).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
-        setOnFocusChangeListener { v, hasFocus ->
-            if (hasFocus && scroll != null) scroll.postDelayed({ scroll.smoothScrollTo(0, v.bottom + dp(180)) }, 220)
-        }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(68)).apply { setMargins(dp(16), dp(7), dp(16), dp(7)) }
     }
 
-    private fun topBar(title: String, back: Boolean = false, action: String? = null, actionClick: (() -> Unit)? = null) = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(16), dp(10), dp(16), dp(10))
-        if (back) addView(txt("‹", 38f, cream, true).apply { gravity = Gravity.CENTER; setOnClickListener { dashboardScreen() } }, LinearLayout.LayoutParams(dp(44), dp(44)))
-        else addView(txt("D", 31f, gold, true), LinearLayout.LayoutParams(dp(48), dp(44)))
+    private fun languageStrip(refresh: () -> Unit): HorizontalScrollView {
+        val hsv = HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; overScrollMode = View.OVER_SCROLL_NEVER }
+        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(12), dp(6), dp(12), dp(6)) }
+        langs.forEach { (label, code) ->
+            row.addView(txt(label, 12f, if (lang()==code) bg else cream, true).apply {
+                gravity = Gravity.CENTER; setPadding(dp(14), dp(9), dp(14), dp(9))
+                background = shape(if (lang()==code) gold else navy, 18, Color.rgb(106,87,61))
+                setOnClickListener { prefs.edit().putString("lang", code).apply(); refresh() }
+            }, LinearLayout.LayoutParams(-2, -2).apply { setMargins(dp(4),0,dp(4),0) })
+        }
+        hsv.addView(row)
+        return hsv
+    }
+
+    private fun top(title: String, back: (() -> Unit)? = null): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(16), dp(10), dp(16), dp(8))
+        if (back != null) addView(txt("‹", 38f, cream, true).apply { gravity = Gravity.CENTER; setOnClickListener { back() } }, LinearLayout.LayoutParams(dp(44), dp(44)))
+        else addView(txt("D", 30f, gold, true).apply { gravity = Gravity.CENTER }, LinearLayout.LayoutParams(dp(44), dp(44)))
         addView(txt(title, 23f, cream, true), LinearLayout.LayoutParams(0, -2, 1f))
-        if (action != null) addView(txt(action, 13f, gold, true).apply { gravity = Gravity.CENTER; setPadding(dp(10), dp(8), dp(10), dp(8)); setOnClickListener { actionClick?.invoke() } })
     }
 
-    private fun setupScreen() {
+    private fun showHome() {
+        val hasGoal = !(prefs.getString("goal_name", "") ?: "").isBlank()
+        if (hasGoal) dashboard() else setup()
+    }
+
+    private fun setup() {
         clear()
-        val scroll = ScrollView(this).apply { isFillViewport = true }
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(220)) }
+        val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(300)) }
         scroll.addView(col)
-        col.addView(topBar("DREAM", false, "🌐 ${if (lang() == "en") "EN" else "SK"}") { languageDialog { setupScreen() } })
+        col.addView(top("DREAM"))
+        col.addView(languageStrip { setup() })
 
-        val hero = cardBox(30).apply {
-            setPadding(dp(24), dp(26), dp(24), dp(26))
-            background = gradient(intArrayOf(Color.rgb(26, 58, 92), Color.rgb(10, 26, 47)), 30, GradientDrawable.Orientation.TL_BR)
-            addView(txt(tr("Vytvor svoj\nDREAM", "Build your\nDREAM"), 36f, cream, true))
-            addView(txt(tr("Premeníme sen na jasný plán.", "Turn your dream into a clear plan."), 16f, muted).apply { setPadding(0, dp(14), 0, 0) })
-            addView(txt("FOCUS  •  PLAN  •  ACHIEVE", 13f, gold, true).apply { setPadding(0, dp(22), 0, 0) })
+        col.addView(card().apply {
+            addView(txt(tr("Vytvor svoj DREAM", "Build your DREAM"), 34f, cream, true))
+            addView(txt(tr("Jasný cieľ. Jasný plán. Každý deň bližšie.", "A clear goal. A clear plan. Closer every day."), 15f, muted).apply { setPadding(0, dp(12), 0, 0) })
+            addView(txt("FOCUS  •  PLAN  •  ACHIEVE", 13f, gold, true).apply { setPadding(0, dp(18), 0, 0) })
+        })
+
+        val goal = input(tr("Názov sna", "Dream name"))
+        val target = input(tr("Koľko potrebuješ", "Target amount"), true)
+        val saved = input(tr("Koľko už máš", "Already saved"), true)
+        val income = input(tr("Mesačný príjem", "Monthly income"), true)
+        val expenses = input(tr("Mesačné výdavky", "Monthly expenses"), true)
+        listOf(goal,target,saved,income,expenses).forEach { field ->
+            col.addView(field)
+            field.setOnFocusChangeListener { _, focused -> if (focused) scroll.postDelayed({ scroll.smoothScrollTo(0, field.bottom + dp(220)) }, 220) }
         }
-        col.addView(hero)
-
-        val goal = input(tr("Názov sna", "Dream name"), false, scroll)
-        val target = input(tr("Koľko potrebuješ", "Target amount"), true, scroll)
-        val current = input(tr("Koľko už máš", "Already saved"), true, scroll)
-        val income = input(tr("Mesačný príjem", "Monthly income"), true, scroll)
-        val expenses = input(tr("Mesačné výdavky", "Monthly expenses"), true, scroll)
-        listOf(goal, target, current, income, expenses).forEach { col.addView(it) }
 
         var picked = 0L
-        lateinit var dateBtn: Button
-        dateBtn = button(tr("📅  Vybrať dátum cieľa", "📅  Choose target date")) {
+        lateinit var date: Button
+        date = button(tr("📅  Vybrať dátum cieľa", "📅  Choose target date")) {
             val c = Calendar.getInstance()
             DatePickerDialog(this, { _, y, m, d ->
-                val cc = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59); set(Calendar.MILLISECOND, 0) }
+                val cc = Calendar.getInstance().apply { set(y,m,d,23,59,59); set(Calendar.MILLISECOND,0) }
                 picked = cc.timeInMillis
-                dateBtn.text = "📅  " + SimpleDateFormat("d. M. yyyy", Locale.getDefault()).format(Date(picked))
+                date.text = "📅  " + SimpleDateFormat("d. M. yyyy", Locale.getDefault()).format(Date(picked))
+                scroll.postDelayed({ scroll.fullScroll(View.FOCUS_DOWN) }, 100)
             }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
         }
-        col.addView(dateBtn)
-        col.addView(accentButton(tr("VYTVORIŤ MÔJ PLÁN", "CREATE MY PLAN")) {
+        col.addView(date)
+
+        val create = button(tr("VYTVORIŤ MÔJ PLÁN", "CREATE MY PLAN"), true) {
             val n = goal.text.toString().trim()
-            val t = target.text.toString().replace(',', '.').toDoubleOrNull()
-            val h = current.text.toString().replace(',', '.').toDoubleOrNull()
-            val inc = income.text.toString().replace(',', '.').toDoubleOrNull()
-            val exp = expenses.text.toString().replace(',', '.').toDoubleOrNull()
-            if (n.isBlank() || t == null || h == null || inc == null || exp == null || picked == 0L || t <= 0) {
-                toast(tr("Doplň všetky údaje.", "Complete all fields.")); return@accentButton
+            val t = target.text.toString().replace(',','.').toDoubleOrNull()
+            val s = saved.text.toString().replace(',','.').toDoubleOrNull()
+            val i = income.text.toString().replace(',','.').toDoubleOrNull()
+            val e = expenses.text.toString().replace(',','.').toDoubleOrNull()
+            if (n.isBlank() || t == null || s == null || i == null || e == null || picked == 0L || t <= 0) {
+                Toast.makeText(this, tr("Doplň všetky údaje.", "Complete all fields."), Toast.LENGTH_SHORT).show(); return@button
             }
-            prefs.edit().putString("goal_name", n).putFloat("target", t.toFloat()).putFloat("saved", h.toFloat())
-                .putFloat("income", inc.toFloat()).putFloat("expenses", exp.toFloat()).putLong("target_date", picked).apply()
-            dashboardScreen()
-        })
+            prefs.edit().putString("goal_name", n).putFloat("target",t.toFloat()).putFloat("saved",s.toFloat()).putFloat("income",i.toFloat()).putFloat("expenses",e.toFloat()).putLong("target_date",picked).apply()
+            dashboard()
+        }
+        col.addView(create)
+        create.setOnFocusChangeListener { _, focused -> if (focused) scroll.postDelayed({ scroll.fullScroll(View.FOCUS_DOWN) }, 120) }
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
     }
 
-    private fun dashboardScreen() {
+    private fun dashboard() {
         clear()
-        val scroll = ScrollView(this).apply { isFillViewport = true }
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(24)) }
+        val target = prefs.getFloat("target",0f).toDouble()
+        val saved = prefs.getFloat("saved",0f).toDouble()
+        val income = prefs.getFloat("income",0f).toDouble()
+        val expenses = prefs.getFloat("expenses",0f).toDouble()
+        val date = prefs.getLong("target_date",System.currentTimeMillis())
+        val remaining = max(0.0, target-saved)
+        val days = max(1L, ceil((date-System.currentTimeMillis())/86400000.0).toLong())
+        val daily = remaining/days
+        val free = max(0.0,(income-expenses)/30.0-daily)
+        val pct = if (target>0) (saved/target*100).coerceIn(0.0,100.0) else 0.0
+        val name = prefs.getString("goal_name", tr("Môj sen","My dream")) ?: "DREAM"
+
+        val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0,dp(6),0,dp(120)) }
         scroll.addView(col)
+        col.addView(top(name))
+        col.addView(languageStrip { dashboard() })
 
-        val name = prefs.getString("goal_name", tr("Môj sen", "My dream")) ?: tr("Môj sen", "My dream")
-        val target = prefs.getFloat("target", 0f).toDouble()
-        val saved = prefs.getFloat("saved", 0f).toDouble()
-        val income = prefs.getFloat("income", 0f).toDouble()
-        val expenses = prefs.getFloat("expenses", 0f).toDouble()
-        val targetDate = prefs.getLong("target_date", System.currentTimeMillis())
-        val remaining = max(0.0, target - saved)
-        val days = max(1L, ceil((targetDate - System.currentTimeMillis()) / 86400000.0).toLong())
-        val daily = remaining / days
-        val freeDaily = max(0.0, (income - expenses) / 30.0 - daily)
-        val pct = if (target > 0) (saved / target * 100).coerceIn(0.0, 100.0) else 0.0
-
-        col.addView(topBar(name, false, tr("Upraviť", "Edit")) { editGoal() })
-
-        val hero = cardBox(30).apply {
+        col.addView(card().apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(22), dp(24), dp(22), dp(24))
-            background = gradient(intArrayOf(Color.rgb(24, 55, 87), Color.rgb(10, 28, 49)), 30, GradientDrawable.Orientation.TL_BR)
-            addView(txt("${money(saved)}  /  ${money(target)}", 27f, cream, true).apply { gravity = Gravity.CENTER })
-            val ring = CircularProgressView(this@MainActivity, pct.toFloat(), gold, Color.rgb(94, 112, 134)).apply {
-                layoutParams = LinearLayout.LayoutParams(dp(176), dp(176)).apply { setMargins(0, dp(18), 0, dp(14)) }
-            }
-            addView(ring)
-            addView(txt(String.format(Locale.getDefault(), "%.1f %%", pct), 16f, gold, true).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("Do cieľa: $days dní", "To goal: $days days"), 17f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) })
-            addView(txt(tr("Približne ${money(daily)} denne", "About ${money(daily)} per day"), 14f, muted).apply { gravity = Gravity.CENTER; setPadding(0, dp(5), 0, 0) })
-        }
-        col.addView(hero)
+            addView(txt("${money(saved)}  /  ${money(target)}", 28f, cream, true).apply { gravity = Gravity.CENTER })
+            addView(ProgressRing(this@MainActivity,pct.toFloat(),gold,Color.rgb(96,113,135)).apply { layoutParams = LinearLayout.LayoutParams(dp(185),dp(185)).apply { setMargins(0,dp(18),0,dp(12)) } })
+            addView(txt(String.format(Locale.getDefault(),"%.1f %%",pct),16f,gold,true).apply { gravity=Gravity.CENTER })
+            addView(txt(tr("Do cieľa: $days dní","To goal: $days days"),18f,cream,true).apply { gravity=Gravity.CENTER; setPadding(0,dp(8),0,0) })
+            addView(txt(tr("Približne ${money(daily)} denne","About ${money(daily)} per day"),14f,muted).apply { gravity=Gravity.CENTER; setPadding(0,dp(5),0,0) })
+        })
 
-        val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(12), dp(3), dp(12), dp(3)) }
-        metrics.addView(metric(tr("Dnes môžem minúť", "Can spend today"), money(freeDaily)), LinearLayout.LayoutParams(0, -2, 1f))
-        metrics.addView(metric(tr("Progres", "Progress"), String.format(Locale.getDefault(), "%.1f %%", pct)), LinearLayout.LayoutParams(0, -2, 1f))
+        val metrics = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; setPadding(dp(12),dp(2),dp(12),dp(2)) }
+        metrics.addView(metric(tr("Dnes môžem minúť","Can spend today"),money(free)),LinearLayout.LayoutParams(0,-2,1f))
+        metrics.addView(metric(tr("Progres","Progress"),String.format(Locale.getDefault(),"%.1f %%",pct)),LinearLayout.LayoutParams(0,-2,1f))
         col.addView(metrics)
-        pendingCard(col)
-        col.addView(accentButton(tr("CHCEM NIEČO KÚPIŤ", "I WANT TO BUY")) { purchaseScreen() })
-        col.addView(button(tr("PRIDAŤ DNEŠNÝ KROK", "ADD TODAY'S STEP")) { addStepDialog() })
 
-        val quote = cardBox(25).apply {
-            addView(txt(tr("„Malé kroky každý deň tvoria veľké zmeny.“", "“Small steps every day create big change.”"), 17f, cream, true))
-            addView(txt(tr("Každé rozhodnutie ťa môže priblížiť k tomu, na čom ti záleží viac.", "Every decision can bring you closer to what matters more."), 14f, muted).apply { setPadding(0, dp(8), 0, 0) })
-        }
-        col.addView(quote)
-
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        root.addView(bottomNav(0))
+        col.addView(button(tr("CHCEM NIEČO KÚPIŤ","I WANT TO BUY"),true) { purchase() })
+        col.addView(button(tr("PRIDAŤ DNEŠNÝ KROK","ADD TODAY'S STEP")) { addStep() })
+        col.addView(card().apply {
+            addView(txt(tr("„Malé kroky každý deň tvoria veľké zmeny.“","“Small steps every day create big change.”"),18f,cream,true))
+            addView(txt(tr("Každé rozhodnutie ťa môže priblížiť k tomu, na čom ti záleží viac.","Every decision can bring you closer to what matters more."),14f,muted).apply { setPadding(0,dp(8),0,0) })
+        })
+        root.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+        root.addView(nav())
     }
 
-    private fun metric(label: String, value: String) = LinearLayout(this).apply {
-        orientation = LinearLayout.VERTICAL
-        setPadding(dp(14), dp(14), dp(14), dp(14))
-        background = gradient(intArrayOf(Color.rgb(18, 42, 68), Color.rgb(10, 28, 48)), 22)
-        addView(txt(label, 12f, muted))
-        addView(txt(value, 19f, gold, true).apply { setPadding(0, dp(5), 0, 0) })
-        layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) }
+    private fun metric(label:String,value:String)=LinearLayout(this).apply {
+        orientation=LinearLayout.VERTICAL; setPadding(dp(15),dp(15),dp(15),dp(15)); background=shape(navy,23)
+        addView(txt(label,12f,muted)); addView(txt(value,19f,gold,true).apply { setPadding(0,dp(5),0,0) })
+        layoutParams=LinearLayout.LayoutParams(0,-2,1f).apply { setMargins(dp(4),dp(4),dp(4),dp(4)) }
     }
 
-    private fun bottomNav(active: Int) = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
-        gravity = Gravity.CENTER
-        setPadding(dp(8), dp(8), dp(8), dp(10))
-        background = solid(Color.rgb(6, 18, 33), 0)
-        val labels = arrayOf(tr("⌂\nPrehľad", "⌂\nHome"), tr("◷\nHistória", "◷\nHistory"), "+", tr("▥\nŠtatistiky", "▥\nStats"), tr("⚙\nNastavenia", "⚙\nSettings"))
-        labels.forEachIndexed { i, label ->
-            val v = txt(label, if (i == 2) 26f else 11f, if (i == active || i == 2) cream else muted, i == active || i == 2).apply {
-                gravity = Gravity.CENTER
-                if (i == 2) background = solid(Color.rgb(43, 79, 127), 28)
+    private fun nav()=LinearLayout(this).apply {
+        orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER; setPadding(dp(4),dp(7),dp(4),dp(9)); background=shape(Color.rgb(6,18,33),0)
+        val items=listOf("⌂\n${tr("Prehľad","Home")}","◷\n${tr("História","History")}","+","▥\n${tr("Štatistiky","Stats")}","⚙\n${tr("Nastavenia","Settings")}")
+        items.forEachIndexed { i,label ->
+            addView(txt(label, if(i==2) 25f else 10f, if(i==0||i==2) cream else muted, i==0||i==2).apply {
+                gravity=Gravity.CENTER
+                if(i==2) background=shape(Color.rgb(45,80,128),26)
                 setOnClickListener {
-                    when (i) {
-                        0 -> dashboardScreen()
-                        1 -> historyScreen()
-                        2 -> purchaseScreen()
-                        3 -> statsScreen()
-                        4 -> settingsScreen()
-                    }
+                    when(i){0->dashboard();1->simplePage(tr("História","History"));2->addStep();3->simplePage(tr("Štatistiky","Statistics"));4->settings()}
                 }
-            }
-            addView(v, LinearLayout.LayoutParams(0, dp(56), 1f).apply { setMargins(dp(3), 0, dp(3), 0) })
+            },LinearLayout.LayoutParams(0,dp(58),1f).apply { setMargins(dp(2),0,dp(2),0) })
         }
     }
 
-    private fun purchaseScreen() {
-        clear()
-        val scroll = ScrollView(this).apply { isFillViewport = true }
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(180)) }
-        scroll.addView(col)
-        col.addView(topBar(tr("Chcem niečo kúpiť", "I want to buy"), true))
-        val product = cardBox(30).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(24), dp(28), dp(24), dp(28))
-            addView(txt("⌚", 54f, cream).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("Každý nákup má svoju cenu", "Every purchase has a cost"), 15f, muted, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(10), 0, 0) })
-        }
-        col.addView(product)
-        val item = input(tr("Čo chceš kúpiť?", "What do you want to buy?"), false, scroll)
-        val price = input(tr("Cena", "Price"), true, scroll)
-        col.addView(item); col.addView(price)
-        col.addView(accentButton(tr("UKÁZAŤ DOPAD", "SHOW IMPACT")) {
-            val p = price.text.toString().replace(',', '.').toDoubleOrNull()
-            if (item.text.toString().isBlank() || p == null || p <= 0) { toast(tr("Zadaj názov a cenu.", "Enter item and price.")); return@accentButton }
-            impactScreen(item.text.toString().trim(), p)
-        })
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+    private fun simplePage(title:String){
+        clear(); root.addView(top(title){dashboard()}); root.addView(card().apply { addView(txt(tr("Táto sekcia je pripravená na používanie.","This section is ready to use."),16f,muted)) })
     }
 
-    private fun impactScreen(item: String, price: Double) {
-        clear()
-        val target = prefs.getFloat("target", 1f).toDouble()
-        val saved = prefs.getFloat("saved", 0f).toDouble()
-        val targetDate = prefs.getLong("target_date", System.currentTimeMillis() + 86400000)
-        val days = max(1L, ceil((targetDate - System.currentTimeMillis()) / 86400000.0).toLong())
-        val daily = max(0.01, (target - saved) / days)
-        val lostDays = ceil(price / daily).toInt()
-        val pct = (price / target * 100).coerceAtLeast(0.0)
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(28)) }
-        col.addView(topBar(tr("Dopad na tvoj sen", "Impact on your dream"), true))
-        val c = cardBox(30).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            background = gradient(intArrayOf(Color.rgb(27, 54, 85), Color.rgb(57, 38, 73), Color.rgb(12, 31, 52)), 30, GradientDrawable.Orientation.TL_BR)
-            addView(txt(item, 19f, cream, true).apply { gravity = Gravity.CENTER })
-            addView(txt(money(price), 32f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(7), 0, dp(10)) })
-            addView(txt(String.format(Locale.getDefault(), "%.1f %%", pct), 35f, pink, true).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("tvojho sna", "of your dream"), 13f, muted).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("Posun približne o $lostDays dní", "Delay of about $lostDays days"), 18f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(18), 0, 0) })
-        }
-        col.addView(c)
-        col.addView(accentButton(tr("KÚPIM TO", "BUY IT")) { saveHistory(item, price, "bought"); prefs.edit().putFloat("saved", max(0.0, saved - price).toFloat()).apply(); dashboardScreen() })
-        col.addView(button(tr("POČKÁM 24 HODÍN", "WAIT 24 HOURS")) { prefs.edit().putString("pending_item", item).putFloat("pending_price", price.toFloat()).putLong("pending_until", System.currentTimeMillis() + 86400000L).apply(); saveHistory(item, price, "wait"); dashboardScreen() })
-        col.addView(button(tr("RADŠEJ MÔJ SEN", "CHOOSE MY DREAM")) { saveHistory(item, price, "dream"); prefs.edit().putFloat("saved", (saved + price).toFloat()).apply(); dashboardScreen() })
-        root.addView(ScrollView(this).apply { addView(col) }, LinearLayout.LayoutParams(-1, 0, 1f))
+    private fun settings(){
+        clear(); val col=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(0,dp(8),0,dp(80)) }
+        col.addView(top(tr("Nastavenia","Settings")){dashboard()}); col.addView(languageStrip { settings() })
+        col.addView(button(tr("UPRAVIŤ CIEĽ","EDIT GOAL")) { prefs.edit().remove("goal_name").apply(); setup() })
+        col.addView(button(tr("VYMAZAŤ DÁTA","RESET DATA"),true) { prefs.edit().clear().apply(); setup() })
+        root.addView(col)
     }
 
-    private fun pendingCard(col: LinearLayout) {
-        val until = prefs.getLong("pending_until", 0L)
-        if (until <= 0L) return
-        val item = prefs.getString("pending_item", "") ?: ""
-        val price = prefs.getFloat("pending_price", 0f).toDouble()
-        val remaining = until - System.currentTimeMillis()
-        val c = cardBox(24).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            addView(txt(tr("24-hodinová pauza", "24-hour pause"), 14f, gold, true).apply { gravity = Gravity.CENTER })
-            addView(txt("$item  •  ${money(price)}", 18f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(6), 0, 0) })
-            addView(txt(if (remaining <= 0) tr("Čas vypršal — rozhodni sa.", "Time is up — decide now.") else tr("Zostáva približne ${max(1, remaining / 3600000)} h", "About ${max(1, remaining / 3600000)} h left"), 13f, muted).apply { gravity = Gravity.CENTER; setPadding(0, dp(6), 0, 0) })
-            if (remaining <= 0) setOnClickListener { finalDecision(item, price) }
-        }
-        col.addView(c)
+    private fun purchase(){
+        val box=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(8),dp(8),dp(8),dp(8)) }
+        val what=input(tr("Čo chceš kúpiť?","What do you want to buy?")); val price=input(tr("Cena","Price"),true)
+        box.addView(what); box.addView(price)
+        AlertDialog.Builder(this).setTitle(tr("Rozhodnutie","Decision")).setView(box)
+            .setPositiveButton(tr("Uložiť","Save")){_,_->
+                val p=price.text.toString().replace(',','.').toDoubleOrNull() ?: 0.0
+                if(p>0){ val saved=prefs.getFloat("saved",0f)+p.toFloat(); prefs.edit().putFloat("saved",saved).apply(); dashboard() }
+            }.setNegativeButton(tr("Zrušiť","Cancel"),null).show()
     }
 
-    private fun finalDecision(item: String, price: Double) {
-        AlertDialog.Builder(this).setTitle(tr("Čo chceš viac?", "What do you want more?"))
-            .setMessage("$item — ${money(price)}")
-            .setPositiveButton(tr("RADŠEJ MÔJ SEN", "CHOOSE MY DREAM")) { _, _ ->
-                val s = prefs.getFloat("saved", 0f).toDouble(); prefs.edit().putFloat("saved", (s + price).toFloat()).remove("pending_item").remove("pending_price").remove("pending_until").apply(); saveHistory(item, price, "dream_after_24h"); dashboardScreen()
-            }
-            .setNegativeButton(tr("KÚPIM TO", "BUY IT")) { _, _ ->
-                val s = prefs.getFloat("saved", 0f).toDouble(); prefs.edit().putFloat("saved", max(0.0, s - price).toFloat()).remove("pending_item").remove("pending_price").remove("pending_until").apply(); saveHistory(item, price, "bought_after_24h"); dashboardScreen()
-            }.show()
+    private fun addStep(){
+        val e=EditText(this).apply { hint=tr("Koľko si dnes odložil?","How much did you save today?"); inputType=InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
+        AlertDialog.Builder(this).setTitle(tr("Dnešný krok","Today's step")).setView(e)
+            .setPositiveButton(tr("Pridať","Add")){_,_->
+                val v=e.text.toString().replace(',','.').toFloatOrNull() ?: 0f
+                if(v>0){ prefs.edit().putFloat("saved",prefs.getFloat("saved",0f)+v).apply(); dashboard() }
+            }.setNegativeButton(tr("Zrušiť","Cancel"),null).show()
     }
 
-    private fun addStepDialog() {
-        val e = EditText(this).apply { hint = tr("Suma", "Amount"); inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL }
-        AlertDialog.Builder(this).setTitle(tr("Dnešný krok k snu", "Today's step")) .setView(e)
-            .setPositiveButton(tr("ULOŽIŤ", "SAVE")) { _, _ ->
-                val v = e.text.toString().replace(',', '.').toDoubleOrNull() ?: 0.0
-                if (v > 0) { val s = prefs.getFloat("saved", 0f).toDouble(); prefs.edit().putFloat("saved", (s + v).toFloat()).apply(); saveHistory(tr("Dnešný krok", "Today's step"), v, "step"); dashboardScreen() }
-            }.setNegativeButton(tr("ZRUŠIŤ", "CANCEL"), null).show()
-    }
-
-    private fun historyScreen() {
-        clear()
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(24)) }
-        col.addView(topBar(tr("História", "History"), false))
-        val entries = prefs.getString("history", "")?.lines()?.filter { it.isNotBlank() } ?: emptyList()
-        if (entries.isEmpty()) col.addView(cardBox().apply { addView(txt(tr("Zatiaľ tu nič nie je.", "Nothing here yet."), 16f, muted)) })
-        else entries.takeLast(20).reversed().forEach { raw ->
-            val p = raw.split("|")
-            if (p.size >= 4) col.addView(cardBox(22).apply {
-                addView(txt(p[1], 16f, cream, true))
-                addView(txt("${p[2]}  •  ${p[3]}", 13f, muted).apply { setPadding(0, dp(5), 0, 0) })
-            })
-        }
-        val scroll = ScrollView(this).apply { addView(col) }
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f)); root.addView(bottomNav(1))
-    }
-
-    private fun statsScreen() {
-        clear()
-        val target = prefs.getFloat("target", 0f).toDouble()
-        val saved = prefs.getFloat("saved", 0f).toDouble()
-        val pct = if (target > 0) (saved / target * 100).coerceIn(0.0, 100.0) else 0.0
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(24)) }
-        col.addView(topBar(tr("Štatistiky", "Statistics"), false))
-        val c = cardBox(30).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            addView(txt(tr("Celkový progres", "Overall progress"), 15f, muted, true).apply { gravity = Gravity.CENTER })
-            addView(CircularProgressView(this@MainActivity, pct.toFloat(), gold, Color.rgb(90, 108, 130)).apply { layoutParams = LinearLayout.LayoutParams(dp(190), dp(190)).apply { setMargins(0, dp(18), 0, dp(12)) } })
-            addView(txt(String.format(Locale.getDefault(), "%.1f %%", pct), 27f, cream, true).apply { gravity = Gravity.CENTER })
-            addView(txt("${money(saved)} / ${money(target)}", 15f, gold, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) })
-        }
-        col.addView(c)
-        root.addView(ScrollView(this).apply { addView(col) }, LinearLayout.LayoutParams(-1, 0, 1f)); root.addView(bottomNav(3))
-    }
-
-    private fun settingsScreen() {
-        clear()
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(24)) }
-        col.addView(topBar(tr("Nastavenia", "Settings"), false))
-        val langCard = cardBox().apply {
-            addView(txt(tr("Jazyk aplikácie", "App language"), 17f, cream, true))
-            addView(txt(if (lang() == "en") "English" else "Slovenčina", 14f, gold).apply { setPadding(0, dp(8), 0, 0); setOnClickListener { languageDialog { settingsScreen() } } })
-        }
-        col.addView(langCard)
-        col.addView(button(tr("UPRAVIŤ MÔJ SEN", "EDIT MY DREAM")) { editGoal() })
-        col.addView(button(tr("VYMAZAŤ ÚDAJE", "RESET DATA")) {
-            AlertDialog.Builder(this).setTitle(tr("Vymazať všetko?", "Reset everything?"))
-                .setMessage(tr("Tento krok sa nedá vrátiť späť.", "This cannot be undone."))
-                .setPositiveButton(tr("VYMAZAŤ", "RESET")) { _, _ -> prefs.edit().clear().apply(); setupScreen() }
-                .setNegativeButton(tr("ZRUŠIŤ", "CANCEL"), null).show()
-        })
-        root.addView(ScrollView(this).apply { addView(col) }, LinearLayout.LayoutParams(-1, 0, 1f)); root.addView(bottomNav(4))
-    }
-
-    private fun languageDialog(after: () -> Unit) {
-        val items = arrayOf("Slovenčina", "English")
-        val checked = if (lang() == "en") 1 else 0
-        AlertDialog.Builder(this).setTitle(tr("Jazyk", "Language")).setSingleChoiceItems(items, checked) { d, which ->
-            prefs.edit().putString("lang", if (which == 1) "en" else "sk").apply(); d.dismiss(); after()
-        }.show()
-    }
-
-    private fun editGoal() {
-        prefs.edit().remove("goal_name").apply(); setupScreen()
-    }
-
-    private fun saveHistory(item: String, price: Double, type: String) {
-        val date = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(Date())
-        val old = prefs.getString("history", "") ?: ""
-        val line = "$date|$item|${money(price)}|$type"
-        prefs.edit().putString("history", if (old.isBlank()) line else "$old\n$line").apply()
-    }
-
-    private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
-
-    class CircularProgressView(context: Context, private val progress: Float, private val active: Int, private val track: Int) : View(context) {
-        private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
-        override fun onDraw(canvas: Canvas) {
-            super.onDraw(canvas)
-            val w = width.toFloat(); val h = height.toFloat(); val stroke = w * 0.085f
-            paint.strokeWidth = stroke
-            val r = RectF(stroke, stroke, w - stroke, h - stroke)
-            paint.color = track; canvas.drawArc(r, -90f, 360f, false, paint)
-            paint.color = active; canvas.drawArc(r, -90f, 360f * (progress.coerceIn(0f, 100f) / 100f), false, paint)
-            paint.style = Paint.Style.FILL; paint.color = Color.rgb(255,248,231); paint.textAlign = Paint.Align.CENTER; paint.typeface = Typeface.DEFAULT_BOLD; paint.textSize = w * 0.17f
-            canvas.drawText(String.format(Locale.getDefault(), "%.1f %%", progress), w / 2, h / 2 + paint.textSize / 3, paint)
-            paint.style = Paint.Style.STROKE
+    class ProgressRing(ctx:Context, private val pct:Float, private val fg:Int, private val track:Int):View(ctx){
+        private val p=Paint(Paint.ANTI_ALIAS_FLAG).apply { style=Paint.Style.STROKE; strokeWidth=22f; strokeCap=Paint.Cap.ROUND }
+        private val text=Paint(Paint.ANTI_ALIAS_FLAG).apply { color=Color.WHITE; textSize=54f; textAlign=Paint.Align.CENTER; typeface=Typeface.DEFAULT_BOLD }
+        override fun onDraw(c:Canvas){
+            super.onDraw(c); val pad=30f; val r=RectF(pad,pad,width-pad,height-pad)
+            p.color=track; c.drawArc(r,0f,360f,false,p); p.color=fg; c.drawArc(r,-90f,360f*(pct/100f),false,p)
+            c.drawText(String.format(Locale.getDefault(),"%.1f %%",pct),width/2f,height/2f+18f,text)
         }
     }
 }
