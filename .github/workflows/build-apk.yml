@@ -17,11 +17,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Fix date button compiler issue
+        run: |
+          python - <<'PY'
+          p='app/src/main/java/digital/madeiq/dream/MainActivity.kt'
+          s=open(p,encoding='utf-8').read()
+          s=s.replace('        val dateBtn=button("📅  Vybrať dátum cieľa"){','        lateinit var dateBtn: Button\n        dateBtn=button("📅  Vybrať dátum cieľa"){')
+          s=s.replace('(itButton(dateBtn)).text=', 'dateBtn.text=')
+          open(p,'w',encoding='utf-8').write(s)
+          PY
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DREAM-clean-test1-apk
+          name: DREAM-approved-test-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
