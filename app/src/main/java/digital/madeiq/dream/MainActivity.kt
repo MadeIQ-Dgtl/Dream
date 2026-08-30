@@ -308,13 +308,10 @@ class MainActivity : AppCompatActivity() {
         val name = prefs.getString("goal_name", "DREAM") ?: "DREAM"
         val target = prefs.getFloat("target", 0f).toDouble()
         val saved = prefs.getFloat("saved", 0f).toDouble()
-        val income = prefs.getFloat("income", 0f).toDouble()
-        val expenses = prefs.getFloat("expenses", 0f).toDouble()
         val targetDate = prefs.getLong("target_date", System.currentTimeMillis())
         val remaining = max(0.0, target - saved)
         val days = max(1L, ceil((targetDate - System.currentTimeMillis()) / 86400000.0).toLong())
         val dailyGoal = remaining / days
-        val dailySpend = max(0.0, (income - expenses) / 30.0)
         val pct = if (target > 0) (saved / target * 100).coerceIn(0.0, 100.0) else 0.0
 
         col.addView(topBar(name, showLanguage = true, editAction = { editGoal() }))
@@ -342,18 +339,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(hero)
 
         val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(12), 0, dp(12), 0) }
-        val spendCard = metric(tr("Dnes môžem minúť", "Can spend today"), money(dailySpend), if (dailySpend > 0) green else gold)
-        spendCard.setOnClickListener {
-            AlertDialog.Builder(this)
-                .setTitle(tr("Dnes môžem minúť", "Can spend today"))
-                .setMessage(tr(
-                    "Po odpočítaní tvojich pravidelných mesačných výdavkov máš približne ${money(dailySpend)} voľného rozpočtu na deň. DREAM plán zároveň ukazuje, že pre cieľový dátum potrebuješ približne ${money(dailyGoal)} denne odkladať. Tieto dve hodnoty zobrazujeme oddelene, aby pole neostalo chybne na nule len preto, že cieľ je ambiciózny.",
-                    "After regular monthly expenses you have about ${money(dailySpend)} of free daily budget. Your DREAM plan separately needs about ${money(dailyGoal)} per day toward the goal. These values are shown separately so the spend field does not incorrectly collapse to zero just because the goal is ambitious."
-                ))
-                .setPositiveButton("OK", null)
-                .show()
-        }
-        metrics.addView(spendCard, LinearLayout.LayoutParams(0, -2, 1f))
+        metrics.addView(metric(tr("Dnes potrebujem odložiť", "Need to save today"), money(dailyGoal), green), LinearLayout.LayoutParams(0, -2, 1f))
         metrics.addView(metric(tr("Progres", "Progress"), String.format(locale(), "%.1f %%", pct), gold), LinearLayout.LayoutParams(0, -2, 1f))
         col.addView(metrics)
 
