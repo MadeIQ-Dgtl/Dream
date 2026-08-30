@@ -17,34 +17,6 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Apply final functional fixes
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('app/src/main/java/digital/madeiq/dream/MainActivity.kt')
-          s = p.read_text()
-
-          keyboard_old = 'view.setPadding(bars.left, bars.top, bars.right, if (ime.bottom > 0) dp(4) else bars.bottom)'
-          keyboard_new = 'view.setPadding(bars.left, bars.top, bars.right, max(bars.bottom, ime.bottom))'
-          if keyboard_old in s:
-              s = s.replace(keyboard_old, keyboard_new)
-
-          daily_old = 'val dailySpend = max(0.0, (income - expenses) / 30.0)'
-          daily_new = 'val dailySpend = dailyGoal'
-          if daily_old not in s:
-              raise SystemExit('Expected daily spend calculation not found')
-          s = s.replace(daily_old, daily_new)
-
-          s = s.replace('tr("Dnes môžem minúť", "Can spend today")', 'tr("Dnes potrebujem odložiť", "Need to save today")')
-
-          sk_old = 'Po odpočítaní tvojich pravidelných mesačných výdavkov máš približne ${money(dailySpend)} voľného rozpočtu na deň. DREAM plán zároveň ukazuje, že pre cieľový dátum potrebuješ približne ${money(dailyGoal)} denne odkladať. Tieto dve hodnoty zobrazujeme oddelene, aby pole neostalo chybne na nule len preto, že cieľ je ambiciózny.'
-          sk_new = 'Aby si splnil svoj DREAM v zadanom termíne, potrebuješ odložiť približne ${money(dailyGoal)} denne.'
-          en_old = 'After regular monthly expenses you have about ${money(dailySpend)} of free daily budget. Your DREAM plan separately needs about ${money(dailyGoal)} per day toward the goal. These values are shown separately so the spend field does not incorrectly collapse to zero just because the goal is ambitious.'
-          en_new = 'To reach your DREAM by the target date, you need to save about ${money(dailyGoal)} per day.'
-          s = s.replace(sk_old, sk_new).replace(en_old, en_new)
-
-          p.write_text(s)
-          PY
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Upload APK
