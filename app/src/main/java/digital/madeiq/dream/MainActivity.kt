@@ -175,7 +175,7 @@ class MainActivity : AppCompatActivity() {
         setOnFocusChangeListener { v, hasFocus ->
             if (hasFocus && scroll != null) {
                 scroll.postDelayed({
-                    val rect = android.graphics.Rect(0, 0, v.width, v.height + dp(120))
+                    val rect = android.graphics.Rect(0, 0, v.width, v.height + dp(240))
                     v.requestRectangleOnScreen(rect, true)
                 }, 180)
             }
@@ -221,7 +221,7 @@ class MainActivity : AppCompatActivity() {
         }
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(4), 0, dp(24))
+            setPadding(0, dp(4), 0, dp(180))
         }
         scroll.addView(col)
 
