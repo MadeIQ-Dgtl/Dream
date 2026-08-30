@@ -17,11 +17,48 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Apply keyboard-safe DREAM form fix
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('app/src/main/java/digital/madeiq/dream/MainActivity.kt')
+          s = p.read_text()
+          old = '''        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        val stickyAction = accentButton'''
+          new = '''        val stickyAction = accentButton'''
+          if old not in s:
+              raise SystemExit('Expected setup layout marker not found')
+          s = s.replace(old, new, 1)
+
+          old2 = '''        root.addView(stickyAction)
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(bars.left, bars.top, bars.right, if (ime.bottom > 0) dp(4) else bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(root)
+    }
+'''
+          new2 = '''        col.addView(stickyAction)
+        col.addView(Space(this), LinearLayout.LayoutParams(1, dp(24)))
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        ViewCompat.requestApplyInsets(root)
+    }
+'''
+          if old2 not in s:
+              raise SystemExit('Expected keyboard inset block not found')
+          s = s.replace(old2, new2, 1)
+          p.write_text(s)
+
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DREAM-daily-saving-fix-apk
+          name: DREAM-keyboard-safe-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
