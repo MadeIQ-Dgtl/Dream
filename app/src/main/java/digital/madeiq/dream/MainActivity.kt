@@ -4,8 +4,11 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -29,14 +32,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var root: LinearLayout
     private val prefs by lazy { getSharedPreferences("dream", Context.MODE_PRIVATE) }
 
-    private val bg = Color.rgb(4, 12, 24)
-    private val panel = Color.rgb(13, 31, 52)
-    private val panel2 = Color.rgb(19, 45, 72)
-    private val gold = Color.rgb(250, 183, 83)
-    private val cream = Color.rgb(255, 248, 231)
-    private val muted = Color.rgb(157, 172, 195)
-    private val green = Color.rgb(79, 201, 149)
-    private val pink = Color.rgb(242, 91, 140)
+    private val bg = Color.rgb(3, 12, 24)
+    private val panel = Color.rgb(11, 29, 50)
+    private val panel2 = Color.rgb(18, 43, 70)
+    private val gold = Color.rgb(251, 184, 84)
+    private val cream = Color.rgb(255, 248, 232)
+    private val muted = Color.rgb(156, 171, 193)
+    private val green = Color.rgb(77, 201, 148)
+    private val pink = Color.rgb(242, 88, 141)
+    private val violet = Color.rgb(118, 89, 205)
 
     private val languages = linkedMapOf(
         "sk" to "Slovenčina",
@@ -80,14 +84,7 @@ class MainActivity : AppCompatActivity() {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
     private fun lang() = prefs.getString("lang", "sk") ?: "sk"
 
-    private fun tr(
-        sk: String,
-        en: String,
-        de: String = en,
-        cs: String = sk,
-        pl: String = en,
-        hu: String = en
-    ): String = when (lang()) {
+    private fun tr(sk: String, en: String, de: String = en, cs: String = sk, pl: String = en, hu: String = en): String = when (lang()) {
         "de" -> de
         "cs" -> cs
         "pl" -> pl
@@ -112,6 +109,7 @@ class MainActivity : AppCompatActivity() {
         textSize = size
         setTextColor(color)
         includeFontPadding = false
+        letterSpacing = if (size >= 22f) -0.01f else 0f
         typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
     }
 
@@ -122,20 +120,13 @@ class MainActivity : AppCompatActivity() {
         if (stroke != null) setStroke(dp(1), stroke)
     }
 
-    private fun gradient(
-        colors: IntArray,
-        radius: Int = 28,
-        orientation: GradientDrawable.Orientation = GradientDrawable.Orientation.LEFT_RIGHT
-    ) = GradientDrawable(orientation, colors).apply { cornerRadius = dp(radius).toFloat() }
+    private fun gradient(colors: IntArray, radius: Int = 28, orientation: GradientDrawable.Orientation = GradientDrawable.Orientation.LEFT_RIGHT) =
+        GradientDrawable(orientation, colors).apply { cornerRadius = dp(radius).toFloat() }
 
     private fun cardBox(radius: Int = 28) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(21), dp(20), dp(21), dp(20))
-        background = gradient(
-            intArrayOf(Color.rgb(22, 50, 80), Color.rgb(9, 27, 48)),
-            radius,
-            GradientDrawable.Orientation.TL_BR
-        )
+        background = gradient(intArrayOf(Color.rgb(20, 48, 78), Color.rgb(8, 25, 45)), radius, GradientDrawable.Orientation.TL_BR)
         elevation = dp(3).toFloat()
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(7), dp(16), dp(7)) }
     }
@@ -149,7 +140,7 @@ class MainActivity : AppCompatActivity() {
         stateListAnimator = null
         minHeight = 0
         minimumHeight = 0
-        background = gradient(intArrayOf(Color.rgb(255, 207, 119), Color.rgb(247, 174, 77)), 30)
+        background = gradient(intArrayOf(Color.rgb(255, 210, 127), Color.rgb(248, 177, 80)), 30)
         setPadding(dp(18), dp(13), dp(18), dp(13))
         setOnClickListener { onClick() }
         layoutParams = LinearLayout.LayoutParams(-1, dp(58)).apply { setMargins(dp(16), dp(8), dp(16), dp(8)) }
@@ -157,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun accentButton(label: String, onClick: () -> Unit) = button(label, onClick).apply {
         setTextColor(Color.WHITE)
-        background = gradient(intArrayOf(Color.rgb(255, 176, 82), pink), 30)
+        background = gradient(intArrayOf(Color.rgb(255, 177, 82), Color.rgb(255, 119, 102), pink), 30)
     }
 
     private fun input(hintText: String, numeric: Boolean = false, scroll: ScrollView? = null) = EditText(this).apply {
@@ -175,24 +166,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun topBar(
-        title: String,
-        back: Boolean = false,
-        showLanguage: Boolean = false,
-        editAction: (() -> Unit)? = null
-    ) = LinearLayout(this).apply {
+    private fun topBar(title: String, back: Boolean = false, showLanguage: Boolean = false, editAction: (() -> Unit)? = null) = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(16), dp(10), dp(16), dp(8))
-
-        val mark = txt(if (back) "‹" else "D", if (back) 38f else 26f, if (back) cream else gold, true).apply {
+        setPadding(dp(16), dp(9), dp(16), dp(8))
+        val mark = txt(if (back) "‹" else "D", if (back) 38f else 25f, if (back) cream else cream, true).apply {
             gravity = Gravity.CENTER
-            if (!back) background = solid(Color.rgb(23, 49, 77), 22, Color.rgb(74, 89, 110))
+            if (!back) background = gradient(intArrayOf(Color.rgb(39, 56, 104), Color.rgb(132, 78, 143), Color.rgb(244, 159, 87)), 22, GradientDrawable.Orientation.TL_BR)
             setOnClickListener { if (back) dashboardScreen() }
         }
         addView(mark, LinearLayout.LayoutParams(dp(44), dp(44)))
-        addView(txt(title, 23f, cream, true).apply { setPadding(dp(10), 0, 0, 0) }, LinearLayout.LayoutParams(0, -2, 1f))
-
+        addView(txt(title.uppercase(locale()), 22f, cream, true).apply { setPadding(dp(10), 0, 0, 0) }, LinearLayout.LayoutParams(0, -2, 1f))
         if (editAction != null) {
             addView(txt(tr("Upraviť", "Edit", "Bearbeiten", "Upravit", "Edytuj", "Szerkesztés"), 12f, gold, true).apply {
                 gravity = Gravity.CENTER
@@ -201,10 +185,10 @@ class MainActivity : AppCompatActivity() {
             })
         }
         if (showLanguage) {
-            addView(txt("🌐 ${lang().uppercase(Locale.ROOT)}", 12f, cream, true).apply {
+            addView(txt("🌐", 18f, cream, true).apply {
                 gravity = Gravity.CENTER
-                setPadding(dp(12), dp(8), dp(12), dp(8))
-                background = solid(Color.rgb(19, 43, 69), 18, Color.rgb(78, 94, 117))
+                setPadding(dp(10), dp(8), dp(10), dp(8))
+                background = solid(Color.argb(130, 19, 43, 69), 18, Color.rgb(74, 90, 113))
                 setOnClickListener { languageDialog { showStart() } }
             })
         }
@@ -216,29 +200,24 @@ class MainActivity : AppCompatActivity() {
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(260)) }
         scroll.addView(col)
         col.addView(topBar("DREAM", showLanguage = true))
-
         col.addView(cardBox(32).apply {
             setPadding(dp(24), dp(28), dp(24), dp(27))
-            background = gradient(
-                intArrayOf(Color.rgb(29, 63, 99), Color.rgb(13, 31, 54), Color.rgb(24, 33, 58)),
-                32,
-                GradientDrawable.Orientation.TL_BR
-            )
+            background = gradient(intArrayOf(Color.rgb(30, 62, 97), Color.rgb(38, 43, 79), Color.rgb(100, 57, 95)), 32, GradientDrawable.Orientation.TL_BR)
             addView(txt(tr("Vytvor svoj\nDREAM", "Build your\nDREAM", "Baue deinen\nDREAM", "Vytvoř svůj\nDREAM", "Zbuduj swój\nDREAM", "Építsd fel a\nDREAM-ed"), 36f, cream, true))
-            addView(txt(tr("Premeníme sen na jasný plán.", "Turn your dream into a clear plan.", "Mach aus deinem Traum einen klaren Plan.", "Proměníme sen v jasný plán.", "Zamień marzenie w jasny plan.", "Alakítsd az álmod világos tervvé."), 15f, muted).apply { setPadding(0, dp(14), 0, 0) })
-            addView(txt("FOCUS  •  PLAN  •  ACHIEVE", 13f, gold, true).apply { setPadding(0, dp(21), 0, 0) })
+            addView(txt(tr("Premeníme sen na jasný plán.", "Turn your dream into a clear plan."), 15f, muted).apply { setPadding(0, dp(14), 0, 0) })
+            addView(txt("FOCUS  •  CHOOSE  •  ACHIEVE", 13f, gold, true).apply { setPadding(0, dp(21), 0, 0) })
         })
 
-        val goal = input(tr("Názov sna", "Dream name", "Name des Traums", "Název snu", "Nazwa marzenia", "Álom neve"), false, scroll)
-        val target = input(tr("Koľko potrebuješ", "Target amount", "Zielbetrag", "Kolik potřebuješ", "Kwota celu", "Célösszeg"), true, scroll)
-        val current = input(tr("Koľko už máš", "Already saved", "Bereits gespart", "Kolik už máš", "Już odłożono", "Már megtakarítva"), true, scroll)
-        val income = input(tr("Mesačný príjem", "Monthly income", "Monatliches Einkommen", "Měsíční příjem", "Miesięczny dochód", "Havi bevétel"), true, scroll)
-        val expenses = input(tr("Mesačné výdavky", "Monthly expenses", "Monatliche Ausgaben", "Měsíční výdaje", "Miesięczne wydatki", "Havi kiadás"), true, scroll)
+        val goal = input(tr("Názov sna", "Dream name"), false, scroll)
+        val target = input(tr("Koľko potrebuješ", "Target amount"), true, scroll)
+        val current = input(tr("Koľko už máš", "Already saved"), true, scroll)
+        val income = input(tr("Mesačný príjem", "Monthly income"), true, scroll)
+        val expenses = input(tr("Mesačné výdavky", "Monthly expenses"), true, scroll)
         listOf(goal, target, current, income, expenses).forEach { col.addView(it) }
 
         var picked = 0L
         lateinit var dateBtn: Button
-        dateBtn = button(tr("📅  Vybrať dátum cieľa", "📅  Choose target date", "📅  Zieldatum wählen", "📅  Vybrat cílové datum", "📅  Wybierz datę celu", "📅  Céldátum kiválasztása")) {
+        dateBtn = button(tr("📅  Vybrať dátum cieľa", "📅  Choose target date")) {
             val c = Calendar.getInstance()
             DatePickerDialog(this, { _, y, m, d ->
                 val cc = Calendar.getInstance().apply { set(y, m, d, 23, 59, 59); set(Calendar.MILLISECOND, 0) }
@@ -248,14 +227,14 @@ class MainActivity : AppCompatActivity() {
             }, c.get(Calendar.YEAR), c.get(Calendar.MONTH), c.get(Calendar.DAY_OF_MONTH)).show()
         }
         col.addView(dateBtn)
-        col.addView(accentButton(tr("VYTVORIŤ MÔJ PLÁN", "CREATE MY PLAN", "MEINEN PLAN ERSTELLEN", "VYTVOŘIT MŮJ PLÁN", "UTWÓRZ MÓJ PLAN", "TERV LÉTREHOZÁSA")) {
+        col.addView(accentButton(tr("VYTVORIŤ MÔJ PLÁN", "CREATE MY PLAN")) {
             val n = goal.text.toString().trim()
             val t = target.text.toString().replace(',', '.').toDoubleOrNull()
             val h = current.text.toString().replace(',', '.').toDoubleOrNull()
             val inc = income.text.toString().replace(',', '.').toDoubleOrNull()
             val exp = expenses.text.toString().replace(',', '.').toDoubleOrNull()
             if (n.isBlank() || t == null || h == null || inc == null || exp == null || picked == 0L || t <= 0) {
-                toast(tr("Doplň všetky údaje.", "Complete all fields.", "Fülle alle Felder aus.", "Doplň všechny údaje.", "Uzupełnij wszystkie pola.", "Tölts ki minden mezőt.")); return@accentButton
+                toast(tr("Doplň všetky údaje.", "Complete all fields.")); return@accentButton
             }
             prefs.edit().putString("goal_name", n).putFloat("target", t.toFloat()).putFloat("saved", h.toFloat())
                 .putFloat("income", inc.toFloat()).putFloat("expenses", exp.toFloat()).putLong("target_date", picked).apply()
@@ -267,7 +246,7 @@ class MainActivity : AppCompatActivity() {
     private fun dashboardScreen() {
         clear()
         val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(5), 0, dp(28)) }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(2), 0, dp(22)) }
         scroll.addView(col)
 
         val name = prefs.getString("goal_name", "DREAM") ?: "DREAM"
@@ -278,44 +257,72 @@ class MainActivity : AppCompatActivity() {
         val targetDate = prefs.getLong("target_date", System.currentTimeMillis())
         val remaining = max(0.0, target - saved)
         val days = max(1L, ceil((targetDate - System.currentTimeMillis()) / 86400000.0).toLong())
-        val daily = remaining / days
-        val freeDaily = max(0.0, (income - expenses) / 30.0 - daily)
+        val dailyGoal = remaining / days
+        val dailyAfterExpenses = max(0.0, (income - expenses) / 30.0)
+        val safeDaily = max(0.0, dailyAfterExpenses - dailyGoal)
         val pct = if (target > 0) (saved / target * 100).coerceIn(0.0, 100.0) else 0.0
 
         col.addView(topBar(name, showLanguage = true, editAction = { editGoal() }))
-        col.addView(cardBox(32).apply {
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(22), dp(24), dp(22), dp(24))
-            background = gradient(intArrayOf(Color.rgb(27, 60, 94), Color.rgb(11, 29, 51), Color.rgb(30, 34, 61)), 32, GradientDrawable.Orientation.TL_BR)
-            addView(txt("${money(saved)}  /  ${money(target)}", 26f, cream, true).apply { gravity = Gravity.CENTER })
-            addView(CircularProgressView(this@MainActivity, pct.toFloat(), gold, Color.rgb(91, 108, 130)).apply {
-                layoutParams = LinearLayout.LayoutParams(dp(182), dp(182)).apply { setMargins(0, dp(18), 0, dp(10)) }
-            })
-            addView(txt(tr("Do cieľa: $days dní", "$days days to goal", "Noch $days Tage", "Do cíle: $days dní", "Do celu: $days dni", "$days nap a célig"), 17f, cream, true).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("Približne ${money(daily)} denne", "About ${money(daily)} per day", "Etwa ${money(daily)} pro Tag", "Přibližně ${money(daily)} denně", "Około ${money(daily)} dziennie", "Kb. ${money(daily)} naponta"), 14f, muted).apply { gravity = Gravity.CENTER; setPadding(0, dp(5), 0, 0) })
-        })
 
-        val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(12), dp(2), dp(12), dp(2)) }
-        metrics.addView(metric(tr("Dnes môžem minúť", "Can spend today", "Heute verfügbar", "Dnes mohu utratit", "Dziś mogę wydać", "Ma elkölthető"), money(freeDaily)), LinearLayout.LayoutParams(0, -2, 1f))
-        metrics.addView(metric(tr("Progres", "Progress", "Fortschritt", "Pokrok", "Postęp", "Haladás"), String.format(locale(), "%.1f %%", pct)), LinearLayout.LayoutParams(0, -2, 1f))
+        val hero = FrameLayout(this).apply {
+            background = solid(Color.rgb(10, 27, 47), 34, Color.rgb(38, 61, 88))
+            clipToOutline = true
+            elevation = dp(4).toFloat()
+            layoutParams = LinearLayout.LayoutParams(-1, dp(390)).apply { setMargins(dp(16), dp(4), dp(16), dp(10)) }
+        }
+        hero.addView(DreamHeroView(this, pct.toFloat()), FrameLayout.LayoutParams(-1, -1))
+        val overlay = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(22), dp(18), dp(22), dp(20))
+            addView(txt("🌴  ${name.uppercase(locale())}", 25f, cream, true).apply { gravity = Gravity.CENTER })
+            addView(txt(tr("Môj sen", "My dream"), 13f, cream).apply { alpha = .78f; gravity = Gravity.CENTER; setPadding(0, dp(3), 0, 0) })
+            addView(txt("${money(saved)} / ${money(target)}", 28f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(16), 0, 0) })
+            addView(txt(String.format(locale(), "%.1f %%", pct), 14f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(3), 0, 0) })
+            addView(Space(this@MainActivity), LinearLayout.LayoutParams(1, 0, 1f))
+            addView(CircularProgressView(this@MainActivity, pct.toFloat(), gold, Color.argb(100, 255, 255, 255)).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(145), dp(145))
+            })
+            addView(txt(tr("Do cieľa: $days dní", "$days days to goal"), 15f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) })
+            addView(txt(tr("Potrebujem približne ${money(dailyGoal)} denne", "I need about ${money(dailyGoal)} per day"), 13f, cream).apply { alpha = .82f; gravity = Gravity.CENTER; setPadding(0, dp(4), 0, 0) })
+        }
+        hero.addView(overlay, FrameLayout.LayoutParams(-1, -1))
+        col.addView(hero)
+
+        val metrics = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; setPadding(dp(12), 0, dp(12), 0) }
+        val spendCard = metric(tr("Dnes môžem minúť", "Can spend today"), money(safeDaily), if (safeDaily > 0) green else gold).apply {
+            setOnClickListener {
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(tr("Dnes môžem minúť", "Can spend today"))
+                    .setMessage(tr(
+                        "Po mesačných výdavkoch ti vychádza približne ${money(dailyAfterExpenses)} na deň. Na DREAM potrebuješ odložiť približne ${money(dailyGoal)} denne. Bezpečne teda môžeš dnes minúť ${money(safeDaily)}. Ak je výsledok 0 €, znamená to, že aktuálny termín sna už využíva celý voľný denný rozpočet.",
+                        "After monthly expenses you have about ${money(dailyAfterExpenses)} per day. DREAM needs about ${money(dailyGoal)} per day. Your safe spend today is ${money(safeDaily)}. If it is €0, the current dream deadline uses all available daily budget."
+                    ))
+                    .setPositiveButton("OK", null).show()
+            }
+        }
+        metrics.addView(spendCard, LinearLayout.LayoutParams(0, -2, 1f))
+        metrics.addView(metric(tr("Progres", "Progress"), String.format(locale(), "%.1f %%", pct), gold), LinearLayout.LayoutParams(0, -2, 1f))
         col.addView(metrics)
+
         pendingCard(col)
-        col.addView(accentButton(tr("CHCEM NIEČO KÚPIŤ", "I WANT TO BUY", "ICH MÖCHTE ETWAS KAUFEN", "CHCI NĚCO KOUPIT", "CHCĘ COŚ KUPIĆ", "VÁSÁROLNI AKAROK")) { purchaseScreen() })
-        col.addView(button(tr("PRIDAŤ DNEŠNÝ KROK", "ADD TODAY'S STEP", "HEUTIGEN SCHRITT HINZUFÜGEN", "PŘIDAT DNEŠNÍ KROK", "DODAJ DZISIEJSZY KROK", "MAI LÉPÉS HOZZÁADÁSA")) { addStepDialog() })
+        col.addView(accentButton(tr("CHCEM NIEČO KÚPIŤ", "I WANT TO BUY")) { purchaseScreen() })
+        col.addView(button(tr("PRIDAŤ DNEŠNÝ KROK", "ADD TODAY'S STEP")) { addStepDialog() })
         col.addView(cardBox(25).apply {
-            addView(txt(tr("„Malé kroky každý deň tvoria veľké zmeny.“", "“Small steps every day create big change.”", "„Kleine Schritte jeden Tag schaffen große Veränderungen.“", "„Malé kroky každý den tvoří velké změny.“", "„Małe kroki każdego dnia tworzą wielkie zmiany.”", "„A kis lépések minden nap nagy változást hoznak.”"), 17f, cream, true))
+            addView(txt(tr("„Malé kroky každý deň tvoria veľké zmeny.“", "“Small steps every day create big change.”"), 17f, cream, true))
         })
 
         root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         root.addView(bottomNav(0))
     }
 
-    private fun metric(label: String, value: String) = LinearLayout(this).apply {
+    private fun metric(label: String, value: String, valueColor: Int = gold) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(14), dp(14), dp(14), dp(14))
-        background = gradient(intArrayOf(Color.rgb(18, 42, 68), Color.rgb(10, 28, 48)), 22)
+        setPadding(dp(15), dp(15), dp(15), dp(15))
+        background = gradient(intArrayOf(Color.rgb(20, 48, 78), Color.rgb(8, 26, 47)), 22, GradientDrawable.Orientation.TL_BR)
+        elevation = dp(2).toFloat()
         addView(txt(label, 12f, muted))
-        addView(txt(value, 18f, gold, true).apply { setPadding(0, dp(5), 0, 0) })
+        addView(txt(value, 19f, valueColor, true).apply { setPadding(0, dp(5), 0, 0) })
         layoutParams = LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(dp(4), dp(4), dp(4), dp(4)) }
     }
 
@@ -323,20 +330,20 @@ class MainActivity : AppCompatActivity() {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
         setPadding(dp(8), dp(7), dp(8), dp(7))
-        background = solid(Color.rgb(8, 22, 39), 24, Color.rgb(31, 53, 77))
+        background = solid(Color.rgb(7, 21, 38), 26, Color.rgb(36, 59, 85))
         elevation = dp(8).toFloat()
         layoutParams = LinearLayout.LayoutParams(-1, dp(70)).apply { setMargins(dp(10), dp(5), dp(10), dp(8)) }
         val labels = arrayOf(
-            tr("⌂\nPrehľad", "⌂\nHome", "⌂\nStart", "⌂\nPřehled", "⌂\nStart", "⌂\nFőoldal"),
-            tr("◷\nHistória", "◷\nHistory", "◷\nVerlauf", "◷\nHistorie", "◷\nHistoria", "◷\nElőzmények"),
+            tr("⌂\nPrehľad", "⌂\nHome"),
+            tr("◷\nHistória", "◷\nHistory"),
             "+",
-            tr("▥\nŠtatistiky", "▥\nStats", "▥\nStatistik", "▥\nStatistiky", "▥\nStatystyki", "▥\nStatisztika"),
-            tr("⚙\nNastavenia", "⚙\nSettings", "⚙\nEinstellungen", "⚙\nNastavení", "⚙\nUstawienia", "⚙\nBeállítások")
+            tr("▥\nŠtatistiky", "▥\nStats"),
+            tr("⚙\nNastavenia", "⚙\nSettings")
         )
         labels.forEachIndexed { i, label ->
             addView(txt(label, if (i == 2) 27f else 10f, if (i == active || i == 2) cream else muted, i == active || i == 2).apply {
                 gravity = Gravity.CENTER
-                if (i == 2) background = gradient(intArrayOf(Color.rgb(255, 176, 82), pink), 25)
+                if (i == 2) background = gradient(intArrayOf(Color.rgb(255, 177, 82), Color.rgb(255, 120, 103), pink), 26)
                 setOnClickListener {
                     when (i) {
                         0 -> dashboardScreen()
@@ -355,16 +362,17 @@ class MainActivity : AppCompatActivity() {
         val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(220)) }
         scroll.addView(col)
-        col.addView(topBar(tr("Chcem niečo kúpiť", "I want to buy", "Ich möchte etwas kaufen", "Chci něco koupit", "Chcę coś kupić", "Vásárolni akarok"), back = true))
+        col.addView(topBar(tr("Chcem niečo kúpiť", "I want to buy"), back = true))
         col.addView(cardBox(30).apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(txt("✦", 46f, gold, true).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("Každý nákup má dopad na tvoj DREAM.", "Every purchase affects your DREAM.", "Jeder Kauf beeinflusst deinen DREAM.", "Každý nákup ovlivní tvůj DREAM.", "Każdy zakup wpływa na Twój DREAM.", "Minden vásárlás hatással van a DREAM-edre."), 15f, muted, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(10), 0, 0) })
+            background = gradient(intArrayOf(Color.rgb(25, 53, 85), Color.rgb(62, 46, 82), Color.rgb(16, 33, 55)), 30, GradientDrawable.Orientation.TL_BR)
+            addView(txt("⌚", 46f, gold, true).apply { gravity = Gravity.CENTER })
+            addView(txt(tr("Každý nákup má dopad na tvoj DREAM.", "Every purchase affects your DREAM."), 15f, muted, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(10), 0, 0) })
         })
-        val item = input(tr("Čo chceš kúpiť?", "What do you want to buy?", "Was möchtest du kaufen?", "Co chceš koupit?", "Co chcesz kupić?", "Mit szeretnél venni?"), false, scroll)
-        val price = input(tr("Cena", "Price", "Preis", "Cena", "Cena", "Ár"), true, scroll)
+        val item = input(tr("Čo chceš kúpiť?", "What do you want to buy?"), false, scroll)
+        val price = input(tr("Cena", "Price"), true, scroll)
         col.addView(item); col.addView(price)
-        col.addView(accentButton(tr("UKÁZAŤ DOPAD", "SHOW IMPACT", "AUSWIRKUNG ZEIGEN", "UKÁZAT DOPAD", "POKAŻ WPŁYW", "HATÁS MUTATÁSA")) {
+        col.addView(accentButton(tr("UKÁZAŤ DOPAD", "SHOW IMPACT")) {
             val p = price.text.toString().replace(',', '.').toDoubleOrNull()
             if (item.text.toString().isBlank() || p == null || p <= 0) { toast(tr("Zadaj názov a cenu.", "Enter item and price.")); return@accentButton }
             impactScreen(item.text.toString().trim(), p)
@@ -382,15 +390,17 @@ class MainActivity : AppCompatActivity() {
         val lostDays = ceil(price / daily).toInt()
         val pct = if (target > 0) (price / target * 100).coerceAtLeast(0.0) else 0.0
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(40)) }
-        col.addView(topBar(tr("Dopad na tvoj sen", "Impact on your dream"), back = true))
+        col.addView(topBar(tr("Čo to znamená pre tvoj sen?", "What does it mean for your dream?"), back = true))
         col.addView(cardBox(32).apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            background = gradient(intArrayOf(Color.rgb(28, 58, 89), Color.rgb(59, 39, 74), Color.rgb(12, 31, 52)), 32, GradientDrawable.Orientation.TL_BR)
+            background = gradient(intArrayOf(Color.rgb(30, 59, 90), Color.rgb(79, 49, 82), Color.rgb(18, 33, 54)), 32, GradientDrawable.Orientation.TL_BR)
             addView(txt(item, 19f, cream, true).apply { gravity = Gravity.CENTER })
             addView(txt(money(price), 32f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(7), 0, dp(10)) })
-            addView(txt(String.format(locale(), "%.1f %%", pct), 35f, pink, true).apply { gravity = Gravity.CENTER })
+            addView(txt(tr("To je", "That is"), 13f, muted).apply { gravity = Gravity.CENTER })
+            addView(txt(String.format(locale(), "%.1f %%", pct), 35f, pink, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(4), 0, 0) })
             addView(txt(tr("tvojho sna", "of your dream"), 13f, muted).apply { gravity = Gravity.CENTER })
-            addView(txt(tr("Posun približne o $lostDays dní", "Delay of about $lostDays days"), 18f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(18), 0, 0) })
+            addView(txt(tr("Ak ich kúpiš, tvoj sen sa posunie približne o", "If you buy it, your dream moves by about"), 13f, muted).apply { gravity = Gravity.CENTER; setPadding(0, dp(18), 0, 0) })
+            addView(txt(tr("$lostDays dní", "$lostDays days"), 23f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(4), 0, 0) })
         })
         col.addView(accentButton(tr("KÚPIM TO", "BUY IT")) { saveHistory(item, price, "bought"); prefs.edit().putFloat("saved", max(0.0, saved - price).toFloat()).apply(); dashboardScreen() })
         col.addView(button(tr("POČKÁM 24 HODÍN", "WAIT 24 HOURS")) { prefs.edit().putString("pending_item", item).putFloat("pending_price", price.toFloat()).putLong("pending_until", System.currentTimeMillis() + 86400000L).apply(); saveHistory(item, price, "wait"); dashboardScreen() })
@@ -444,7 +454,7 @@ class MainActivity : AppCompatActivity() {
     private fun historyScreen() {
         clear()
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(28)) }
-        col.addView(topBar(tr("História", "History", "Verlauf", "Historie", "Historia", "Előzmények"), showLanguage = true))
+        col.addView(topBar(tr("História", "History"), showLanguage = true))
         val entries = prefs.getString("history", "")?.lines()?.filter { it.isNotBlank() } ?: emptyList()
         if (entries.isEmpty()) col.addView(cardBox().apply { addView(txt(tr("Zatiaľ tu nič nie je.", "Nothing here yet."), 16f, muted)) })
         else entries.takeLast(20).reversed().forEach { raw ->
@@ -463,7 +473,7 @@ class MainActivity : AppCompatActivity() {
         val saved = prefs.getFloat("saved", 0f).toDouble()
         val pct = if (target > 0) (saved / target * 100).coerceIn(0.0, 100.0) else 0.0
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(28)) }
-        col.addView(topBar(tr("Štatistiky", "Statistics", "Statistik", "Statistiky", "Statystyki", "Statisztika"), showLanguage = true))
+        col.addView(topBar(tr("Štatistiky", "Statistics"), showLanguage = true))
         col.addView(cardBox(32).apply {
             gravity = Gravity.CENTER_HORIZONTAL
             addView(txt(tr("Celkový progres", "Overall progress"), 15f, muted, true).apply { gravity = Gravity.CENTER })
@@ -477,9 +487,9 @@ class MainActivity : AppCompatActivity() {
     private fun settingsScreen() {
         clear()
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(6), 0, dp(28)) }
-        col.addView(topBar(tr("Nastavenia", "Settings", "Einstellungen", "Nastavení", "Ustawienia", "Beállítások"), showLanguage = true))
+        col.addView(topBar(tr("Nastavenia", "Settings"), showLanguage = true))
         col.addView(cardBox().apply {
-            addView(txt(tr("Jazyk aplikácie", "App language", "App-Sprache", "Jazyk aplikace", "Język aplikacji", "Alkalmazás nyelve"), 17f, cream, true))
+            addView(txt(tr("Jazyk aplikácie", "App language"), 17f, cream, true))
             addView(txt(languages[lang()] ?: "Slovenčina", 14f, gold, true).apply { setPadding(0, dp(8), 0, 0); setOnClickListener { languageDialog { settingsScreen() } } })
         })
         col.addView(button(tr("UPRAVIŤ MÔJ SEN", "EDIT MY DREAM")) { editGoal() })
@@ -521,11 +531,45 @@ class MainActivity : AppCompatActivity() {
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_SHORT).show()
 
+    class DreamHeroView(context: Context, private val progress: Float) : View(context) {
+        private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val path = Path()
+
+        override fun onDraw(canvas: Canvas) {
+            super.onDraw(canvas)
+            val w = width.toFloat(); val h = height.toFloat()
+            paint.shader = LinearGradient(0f, 0f, 0f, h, intArrayOf(Color.rgb(20, 54, 90), Color.rgb(34, 51, 83), Color.rgb(202, 112, 91), Color.rgb(9, 25, 45)), null, Shader.TileMode.CLAMP)
+            canvas.drawRect(0f, 0f, w, h, paint)
+            paint.shader = null
+
+            paint.color = Color.argb(150, 255, 186, 111)
+            canvas.drawCircle(w * .5f, h * .48f, w * .19f, paint)
+            paint.color = Color.argb(110, 255, 225, 173)
+            canvas.drawCircle(w * .5f, h * .48f, w * .12f, paint)
+
+            path.reset(); path.moveTo(0f, h * .72f); path.lineTo(w * .22f, h * .48f); path.lineTo(w * .38f, h * .66f); path.lineTo(w * .54f, h * .42f); path.lineTo(w * .78f, h * .7f); path.lineTo(w, h * .52f); path.lineTo(w, h); path.lineTo(0f, h); path.close()
+            paint.color = Color.rgb(20, 45, 66); canvas.drawPath(path, paint)
+            path.reset(); path.moveTo(0f, h * .82f); path.lineTo(w * .28f, h * .68f); path.lineTo(w * .5f, h * .79f); path.lineTo(w * .74f, h * .64f); path.lineTo(w, h * .79f); path.lineTo(w, h); path.lineTo(0f, h); path.close()
+            paint.color = Color.rgb(10, 30, 48); canvas.drawPath(path, paint)
+
+            paint.style = Paint.Style.STROKE; paint.strokeCap = Paint.Cap.ROUND; paint.strokeWidth = w * .018f
+            val ring = RectF(w * .35f, h * .38f, w * .65f, h * .63f)
+            paint.color = Color.argb(90, 255, 255, 255); canvas.drawArc(ring, -90f, 360f, false, paint)
+            paint.shader = LinearGradient(ring.left, ring.top, ring.right, ring.bottom, intArrayOf(Color.rgb(255, 183, 86), Color.rgb(230, 113, 161), Color.rgb(125, 99, 210)), null, Shader.TileMode.CLAMP)
+            canvas.drawArc(ring, -90f, 360f * progress.coerceIn(0f, 100f) / 100f, false, paint)
+            paint.shader = null; paint.style = Paint.Style.FILL
+
+            paint.color = Color.rgb(7, 18, 31)
+            canvas.drawCircle(w * .69f, h * .66f, w * .018f, paint)
+            canvas.drawRoundRect(w * .676f, h * .68f, w * .704f, h * .79f, w * .012f, w * .012f, paint)
+        }
+    }
+
     class CircularProgressView(context: Context, private val progress: Float, private val active: Int, private val track: Int) : View(context) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
-            val w = width.toFloat(); val h = height.toFloat(); val stroke = w * 0.085f
+            val w = width.toFloat(); val h = height.toFloat(); val stroke = w * 0.075f
             paint.strokeWidth = stroke
             val r = RectF(stroke, stroke, w - stroke, h - stroke)
             paint.color = track; canvas.drawArc(r, -90f, 360f, false, paint)
@@ -534,7 +578,7 @@ class MainActivity : AppCompatActivity() {
             paint.color = Color.rgb(255, 248, 231)
             paint.textAlign = Paint.Align.CENTER
             paint.typeface = Typeface.DEFAULT_BOLD
-            paint.textSize = w * 0.17f
+            paint.textSize = w * 0.16f
             canvas.drawText(String.format(Locale.getDefault(), "%.1f %%", progress), w / 2, h / 2 + paint.textSize / 3, paint)
             paint.style = Paint.Style.STROKE
         }
