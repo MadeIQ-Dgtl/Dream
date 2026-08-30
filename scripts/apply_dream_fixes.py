@@ -3,8 +3,18 @@ from pathlib import Path
 p = Path('app/src/main/java/digital/madeiq/dream/MainActivity.kt')
 s = p.read_text(encoding='utf-8')
 
-# 1) Keep the create-plan action inside the scrollable form so the Android
-# keyboard never covers the working area.
+# Keep the approved daily-saving calculation and wording.
+old_daily = '        val dailyGoal = remaining / days'
+new_daily = '        val dailyGoal = if (remaining <= 0.0) 0.0 else ceil((remaining / days) * 100.0) / 100.0'
+if old_daily in s:
+    s = s.replace(old_daily, new_daily, 1)
+
+old_metric = 'metrics.addView(metric(tr("Dnes potrebujem odložiť", "Need to save today"), money(dailyGoal), green), LinearLayout.LayoutParams(0, -2, 1f))'
+new_metric = 'metrics.addView(metric(tr("Denne musíš odložiť", "You must save per day"), money(dailyGoal), green), LinearLayout.LayoutParams(0, -2, 1f))'
+if old_metric in s:
+    s = s.replace(old_metric, new_metric, 1)
+
+# Put the create action inside the same ScrollView as all form fields.
 old = '''        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val stickyAction = accentButton'''
@@ -24,13 +34,14 @@ old2 = '''        root.addView(stickyAction)
     }
 '''
 new2 = '''        col.addView(stickyAction)
-        col.addView(Space(this), LinearLayout.LayoutParams(1, dp(24)))
-        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        col.addView(Space(this), LinearLayout.LayoutParams(1, dp(32)))
+        root.addView(scroll, LinearLayout.LayoutParams(-1, -1))
 
+        // ADJUST_RESIZE already shrinks the Activity to the visible area above IME.
+        // Do not add IME height again as padding: that caused the form to jump/over-scroll.
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
-            view.setPadding(0, 0, 0, max(bars.bottom, ime.bottom) + dp(24))
+            view.setPadding(0, 0, 0, bars.bottom + dp(16))
             insets
         }
         ViewCompat.requestApplyInsets(scroll)
@@ -39,19 +50,5 @@ new2 = '''        col.addView(stickyAction)
 if old2 in s:
     s = s.replace(old2, new2, 1)
 
-# 2) Required daily saving = remaining amount / remaining days,
-# rounded upward to cents so the target is reached by the selected date.
-old3 = '        val dailyGoal = remaining / days'
-new3 = '        val dailyGoal = if (remaining <= 0.0) 0.0 else ceil((remaining / days) * 100.0) / 100.0'
-if old3 not in s:
-    raise SystemExit('Expected dailyGoal calculation not found')
-s = s.replace(old3, new3, 1)
-
-old4 = 'metrics.addView(metric(tr("Dnes potrebujem odložiť", "Need to save today"), money(dailyGoal), green), LinearLayout.LayoutParams(0, -2, 1f))'
-new4 = 'metrics.addView(metric(tr("Denne musíš odložiť", "You must save per day"), money(dailyGoal), green), LinearLayout.LayoutParams(0, -2, 1f))'
-if old4 not in s:
-    raise SystemExit('Expected daily savings metric not found')
-s = s.replace(old4, new4, 1)
-
 p.write_text(s, encoding='utf-8')
-print('DREAM fixes applied')
+print('DREAM keyboard scrolling fix applied')
