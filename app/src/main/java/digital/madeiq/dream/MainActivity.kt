@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -44,10 +45,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Let Android resize the usable app area when the keyboard opens.  Edge-to-edge
-        // plus a system-bars-only inset listener caused the last form fields to remain
-        // behind the IME on Xiaomi devices.
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+        // Android 15 enforces edge-to-edge for targetSdk 35 and some Xiaomi keyboards
+        // do not honour adjustResize consistently. Handle both system bars and the IME
+        // explicitly so the app's usable height always ends above the keyboard.
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = bg
         window.navigationBarColor = bg
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
@@ -60,6 +61,18 @@ class MainActivity : AppCompatActivity() {
             setBackgroundColor(bg)
         }
         setContentView(root)
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.updatePadding(
+                left = bars.left,
+                top = bars.top,
+                right = bars.right,
+                bottom = max(bars.bottom, ime.bottom)
+            )
+            insets
+        }
+        ViewCompat.requestApplyInsets(root)
         showStart()
     }
 
@@ -188,9 +201,9 @@ class MainActivity : AppCompatActivity() {
             isFillViewport = true
             clipToPadding = false
             overScrollMode = View.OVER_SCROLL_NEVER
-            // Permanent breathing room means the last input and CTA can always be
-            // scrolled above the keyboard, even with a tall numeric keyboard.
-            setPadding(0, 0, 0, dp(260))
+            // The root follows the real keyboard height; this smaller tail only keeps
+            // the final action comfortably clear when the form is scrolled to its end.
+            setPadding(0, 0, 0, dp(40))
         }
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, dp(36)) }
         scroll.addView(col)
