@@ -44,7 +44,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // Let Android resize the usable app area when the keyboard opens.  Edge-to-edge
+        // plus a system-bars-only inset listener caused the last form fields to remain
+        // behind the IME on Xiaomi devices.
+        WindowCompat.setDecorFitsSystemWindows(window, true)
         window.statusBarColor = bg
         window.navigationBarColor = bg
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
@@ -56,13 +59,7 @@ class MainActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(bg)
         }
-        ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            insets
-        }
         setContentView(root)
-        ViewCompat.requestApplyInsets(root)
         showStart()
     }
 
@@ -104,8 +101,10 @@ class MainActivity : AppCompatActivity() {
     private fun card(radius: Int = 18) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
         setPadding(dp(16), dp(15), dp(16), dp(15))
-        background = gradient(intArrayOf(Color.rgb(20, 31, 46), Color.rgb(12, 22, 35)), radius, GradientDrawable.Orientation.TL_BR)
-        elevation = dp(2).toFloat()
+        background = gradient(intArrayOf(Color.rgb(22, 37, 56), Color.rgb(10, 21, 35)), radius, GradientDrawable.Orientation.TL_BR).apply {
+            setStroke(dp(1), Color.rgb(43, 57, 75))
+        }
+        elevation = dp(4).toFloat()
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
     }
 
@@ -143,13 +142,21 @@ class MainActivity : AppCompatActivity() {
         setTextColor(cream)
         textSize = 15f
         setSingleLine(true)
-        background = solid(Color.rgb(16, 27, 42), 12, Color.rgb(59, 70, 84))
+        background = gradient(intArrayOf(Color.rgb(20, 35, 54), Color.rgb(13, 26, 42)), 14).apply {
+            setStroke(dp(1), Color.rgb(68, 83, 103))
+        }
         setPadding(dp(16), 0, dp(16), 0)
         if (numeric) inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         imeOptions = EditorInfo.IME_ACTION_NEXT
-        layoutParams = LinearLayout.LayoutParams(-1, dp(56)).apply { setMargins(dp(16), dp(5), dp(16), dp(5)) }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(56)).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
         setOnFocusChangeListener { v, focused ->
-            if (focused && scroll != null) scroll.postDelayed({ v.requestRectangleOnScreen(Rect(0, 0, v.width, v.height + dp(150)), true) }, 120)
+            if (focused && scroll != null) {
+                scroll.postDelayed({
+                    val target = Rect(0, 0, v.width, v.height + dp(180))
+                    v.requestRectangleOnScreen(target, true)
+                    scroll.smoothScrollBy(0, dp(72))
+                }, 220)
+            }
         }
     }
 
@@ -173,15 +180,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupScreen() {
         clear()
-        val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false; overScrollMode = View.OVER_SCROLL_NEVER }
-        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, dp(70)) }
+        val scroll = ScrollView(this).apply {
+            isFillViewport = true
+            clipToPadding = false
+            overScrollMode = View.OVER_SCROLL_NEVER
+            // Permanent breathing room means the last input and CTA can always be
+            // scrolled above the keyboard, even with a tall numeric keyboard.
+            setPadding(0, 0, 0, dp(128))
+        }
+        val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, dp(36)) }
         scroll.addView(col)
         col.addView(topBar("DREAM", showLanguage = true))
 
         val hero = FrameLayout(this).apply {
             background = solid(surface, 22)
             clipToOutline = true
-            layoutParams = LinearLayout.LayoutParams(-1, dp(270)).apply { setMargins(dp(16), dp(4), dp(16), dp(14)) }
+            layoutParams = LinearLayout.LayoutParams(-1, dp(238)).apply { setMargins(dp(16), dp(4), dp(16), dp(16)) }
         }
         hero.addView(DreamScenicView(this), FrameLayout.LayoutParams(-1, -1))
         hero.addView(LinearLayout(this).apply {
@@ -194,7 +208,8 @@ class MainActivity : AppCompatActivity() {
         }, FrameLayout.LayoutParams(-1, -1))
         col.addView(hero)
 
-        col.addView(txt(tr("Nový cieľ", "New goal"), 20f, cream, true).apply { setPadding(dp(16), dp(4), 0, dp(8)) })
+        col.addView(txt(tr("Vytvor svoj DREAM", "Create your DREAM"), 23f, cream, true).apply { setPadding(dp(16), dp(2), 0, dp(4)) })
+        col.addView(txt(tr("Jeden jasný cieľ. Každý deň o krok bližšie.", "One clear goal. One step closer every day."), 14f, muted).apply { setPadding(dp(16), 0, dp(16), dp(12)) })
         val goal = input(tr("Názov cieľa", "Goal name"), false, scroll)
         val target = input(tr("Cieľová suma", "Target amount"), true, scroll)
         val current = input(tr("Počiatočná suma", "Starting amount"), true, scroll)
