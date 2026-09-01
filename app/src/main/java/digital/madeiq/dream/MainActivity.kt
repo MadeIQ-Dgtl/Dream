@@ -151,11 +151,15 @@ class MainActivity : AppCompatActivity() {
         layoutParams = LinearLayout.LayoutParams(-1, dp(56)).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
         setOnFocusChangeListener { v, focused ->
             if (focused && scroll != null) {
-                scroll.postDelayed({
-                    val target = Rect(0, 0, v.width, v.height + dp(180))
-                    v.requestRectangleOnScreen(target, true)
-                    scroll.smoothScrollBy(0, dp(72))
-                }, 220)
+                // Xiaomi's numeric IME finishes resizing later than the first focus
+                // callback. Reposition once during the animation and once after it,
+                // keeping the focused field in the upper half of the visible form.
+                val reveal = {
+                    val wantedTop = (v.top - dp(112)).coerceAtLeast(0)
+                    scroll.smoothScrollTo(0, wantedTop)
+                }
+                scroll.postDelayed(reveal, 180)
+                scroll.postDelayed(reveal, 480)
             }
         }
     }
@@ -186,7 +190,7 @@ class MainActivity : AppCompatActivity() {
             overScrollMode = View.OVER_SCROLL_NEVER
             // Permanent breathing room means the last input and CTA can always be
             // scrolled above the keyboard, even with a tall numeric keyboard.
-            setPadding(0, 0, 0, dp(128))
+            setPadding(0, 0, 0, dp(260))
         }
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, 0, 0, dp(36)) }
         scroll.addView(col)
@@ -195,13 +199,13 @@ class MainActivity : AppCompatActivity() {
         val hero = FrameLayout(this).apply {
             background = solid(surface, 22)
             clipToOutline = true
-            layoutParams = LinearLayout.LayoutParams(-1, dp(238)).apply { setMargins(dp(16), dp(4), dp(16), dp(16)) }
+            layoutParams = LinearLayout.LayoutParams(-1, dp(210)).apply { setMargins(dp(16), dp(4), dp(16), dp(18)) }
         }
         hero.addView(DreamScenicView(this), FrameLayout.LayoutParams(-1, -1))
         hero.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
-            setPadding(dp(24), dp(20), dp(24), dp(30))
+            setPadding(dp(24), dp(18), dp(24), dp(24))
             addView(CloudLogoView(this@MainActivity), LinearLayout.LayoutParams(dp(82), dp(52)))
             addView(txt("D R E A M", 26f, gold2, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(8), 0, 0) })
             addView(txt(tr("TVOR SI SEN. MY POMÔŽEME S CESTOU.", "BUILD YOUR DREAM. WE HELP WITH THE PATH."), 13f, cream, true).apply { gravity = Gravity.CENTER; setPadding(0, dp(12), 0, 0) })
@@ -466,11 +470,27 @@ class MainActivity : AppCompatActivity() {
         private val p = Paint(Paint.ANTI_ALIAS_FLAG)
         override fun onDraw(c: Canvas) {
             val w = width.toFloat(); val h = height.toFloat()
-            p.shader = LinearGradient(0f,0f,0f,h,intArrayOf(Color.rgb(8,18,32),Color.rgb(14,31,50),Color.rgb(57,58,62),Color.rgb(9,17,29)),null,Shader.TileMode.CLAMP); c.drawRect(0f,0f,w,h,p); p.shader=null
-            p.color = Color.argb(210,245,183,85); c.drawCircle(w*.52f,h*.72f,w*.07f,p)
-            p.shader = RadialGradient(w*.52f,h*.72f,w*.32f,Color.argb(150,244,177,70),Color.TRANSPARENT,Shader.TileMode.CLAMP); c.drawCircle(w*.52f,h*.72f,w*.32f,p); p.shader=null
-            fun cloud(cx:Float, cy:Float, s:Float, a:Int){ p.color=Color.argb(a,96,103,108); c.drawCircle(cx,cy,s,p); c.drawCircle(cx+s*.8f,cy+s*.12f,s*.75f,p); c.drawCircle(cx-s*.75f,cy+s*.16f,s*.65f,p); c.drawRect(cx-s*1.4f,cy, cx+s*1.55f,cy+s*.8f,p)}
-            cloud(w*.24f,h*.66f,w*.12f,185); cloud(w*.78f,h*.62f,w*.14f,175); cloud(w*.52f,h*.80f,w*.16f,210)
+            p.shader = LinearGradient(0f,0f,0f,h,
+                intArrayOf(Color.rgb(7,17,31), Color.rgb(17,38,57), Color.rgb(63,65,68), Color.rgb(8,16,27)),
+                floatArrayOf(0f,.45f,.72f,1f), Shader.TileMode.CLAMP)
+            c.drawRect(0f,0f,w,h,p); p.shader=null
+
+            // Warm horizon with restrained glow instead of the former opaque cloud blobs.
+            p.shader = RadialGradient(w*.52f,h*.64f,w*.35f,
+                intArrayOf(Color.argb(185,235,169,70), Color.argb(55,224,174,82), Color.TRANSPARENT),
+                floatArrayOf(0f,.42f,1f), Shader.TileMode.CLAMP)
+            c.drawCircle(w*.52f,h*.64f,w*.35f,p); p.shader=null
+            p.color = Color.rgb(239,188,91); c.drawCircle(w*.52f,h*.64f,w*.055f,p)
+
+            fun mountain(color:Int, vararg points:Float) {
+                p.color=color; val path=Path(); path.moveTo(points[0]*w,points[1]*h)
+                var i=2; while(i<points.size){ path.lineTo(points[i]*w,points[i+1]*h); i+=2 }
+                path.close(); c.drawPath(path,p)
+            }
+            mountain(Color.rgb(35,48,59), 0f,.78f, .18f,.47f, .33f,.70f, .49f,.39f, .69f,.73f, .84f,.50f, 1f,.76f, 1f,1f, 0f,1f)
+            mountain(Color.rgb(14,27,40), 0f,.86f, .23f,.62f, .39f,.80f, .61f,.55f, .78f,.78f, 1f,.59f, 1f,1f, 0f,1f)
+            p.shader = LinearGradient(0f,h*.78f,0f,h,Color.argb(30,224,174,82),Color.TRANSPARENT,Shader.TileMode.CLAMP)
+            c.drawRect(0f,h*.78f,w,h,p); p.shader=null
         }
     }
 
