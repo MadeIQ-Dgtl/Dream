@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Dream" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <item name="android:fontFamily">sans</item>
+        <item name="android:fontFamily">sans-serif</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">#07111F</item>
-        <item name="android:navigationBarColor">#07111F</item>
-        <item name="android:windowBackground">#07111F</item>
-        <item name="colorAccent">#F6B85E</item>
+        <item name="android:statusBarColor">#050C16</item>
+        <item name="android:navigationBarColor">#050C16</item>
+        <item name="android:windowBackground">#050C16</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="colorAccent">#F5C469</item>
     </style>
 </resources>
