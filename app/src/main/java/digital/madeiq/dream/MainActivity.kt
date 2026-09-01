@@ -28,13 +28,13 @@ class MainActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("dream", Context.MODE_PRIVATE) }
 
     private val bg = Color.rgb(5, 12, 22)
-    private val surface = Color.rgb(12, 23, 37)
-    private val surface2 = Color.rgb(18, 31, 48)
-    private val line = Color.rgb(47, 59, 75)
-    private val gold = Color.rgb(224, 174, 82)
-    private val gold2 = Color.rgb(248, 202, 116)
-    private val cream = Color.rgb(247, 242, 232)
-    private val muted = Color.rgb(156, 164, 176)
+    private val surface = Color.rgb(13, 23, 36)
+    private val surface2 = Color.rgb(18, 29, 43)
+    private val line = Color.rgb(49, 61, 76)
+    private val gold = Color.rgb(219, 163, 68)
+    private val gold2 = Color.rgb(245, 196, 105)
+    private val cream = Color.rgb(248, 245, 238)
+    private val muted = Color.rgb(164, 171, 182)
     private val green = Color.rgb(113, 201, 145)
 
     private val languages = linkedMapOf(
@@ -58,7 +58,10 @@ class MainActivity : AppCompatActivity() {
         }
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(bg)
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                intArrayOf(Color.rgb(8, 18, 31), bg, Color.rgb(4, 10, 18))
+            )
         }
         setContentView(root)
         ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
@@ -97,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         textSize = size
         setTextColor(color)
         includeFontPadding = false
-        typeface = Typeface.create("sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
+        typeface = Typeface.create(if (bold) "sans-serif-medium" else "sans-serif", if (bold) Typeface.BOLD else Typeface.NORMAL)
         if (size >= 20f) letterSpacing = -0.015f
     }
 
@@ -113,26 +116,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun card(radius: Int = 18) = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(16), dp(15), dp(16), dp(15))
-        background = gradient(intArrayOf(Color.rgb(22, 37, 56), Color.rgb(10, 21, 35)), radius, GradientDrawable.Orientation.TL_BR).apply {
-            setStroke(dp(1), Color.rgb(43, 57, 75))
+        setPadding(dp(17), dp(16), dp(17), dp(16))
+        background = gradient(intArrayOf(Color.rgb(24, 36, 51), Color.rgb(12, 22, 34)), radius, GradientDrawable.Orientation.TL_BR).apply {
+            setStroke(dp(1), Color.rgb(52, 64, 79))
         }
-        elevation = dp(4).toFloat()
-        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
+        elevation = dp(7).toFloat()
+        layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(7), dp(16), dp(7)) }
     }
 
     private fun goldButton(label: String, onClick: () -> Unit) = Button(this).apply {
         text = label
         isAllCaps = false
-        textSize = 14f
+        textSize = 14.5f
+        letterSpacing = .045f
         setTextColor(Color.rgb(37, 29, 17))
         typeface = Typeface.DEFAULT_BOLD
         stateListAnimator = null
         minHeight = 0
         minimumHeight = 0
-        background = gradient(intArrayOf(gold2, gold), 12)
+        background = gradient(intArrayOf(Color.rgb(250, 207, 122), Color.rgb(211, 151, 57)), 13)
+        elevation = dp(5).toFloat()
         setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(dp(16), dp(8), dp(16), dp(8)) }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(dp(16), dp(9), dp(16), dp(9)) }
     }
 
     private fun outlineButton(label: String, onClick: () -> Unit) = Button(this).apply {
@@ -144,9 +149,11 @@ class MainActivity : AppCompatActivity() {
         stateListAnimator = null
         minHeight = 0
         minimumHeight = 0
-        background = solid(Color.TRANSPARENT, 12, Color.rgb(80, 89, 101))
+        background = gradient(intArrayOf(Color.rgb(17, 29, 43), Color.rgb(11, 21, 33)), 13).apply {
+            setStroke(dp(1), Color.rgb(81, 92, 107))
+        }
         setOnClickListener { onClick() }
-        layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(54)).apply { setMargins(dp(16), dp(7), dp(16), dp(7)) }
     }
 
     private fun input(hintText: String, numeric: Boolean = false, scroll: ScrollView? = null) = EditText(this).apply {
@@ -155,13 +162,13 @@ class MainActivity : AppCompatActivity() {
         setTextColor(cream)
         textSize = 15f
         setSingleLine(true)
-        background = gradient(intArrayOf(Color.rgb(20, 35, 54), Color.rgb(13, 26, 42)), 14).apply {
-            setStroke(dp(1), Color.rgb(68, 83, 103))
+        background = gradient(intArrayOf(Color.rgb(22, 34, 50), Color.rgb(14, 25, 39)), 13).apply {
+            setStroke(dp(1), Color.rgb(60, 74, 92))
         }
         setPadding(dp(16), 0, dp(16), 0)
         if (numeric) inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
         imeOptions = EditorInfo.IME_ACTION_NEXT
-        layoutParams = LinearLayout.LayoutParams(-1, dp(56)).apply { setMargins(dp(16), dp(6), dp(16), dp(6)) }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(58)).apply { setMargins(dp(16), dp(7), dp(16), dp(7)) }
         setOnFocusChangeListener { v, focused ->
             if (focused && scroll != null) {
                 // Xiaomi's numeric IME finishes resizing later than the first focus
@@ -180,13 +187,13 @@ class MainActivity : AppCompatActivity() {
     private fun topBar(title: String, back: Boolean = false, showLanguage: Boolean = false, onEdit: (() -> Unit)? = null) = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
-        setPadding(dp(16), dp(8), dp(16), dp(8))
+        setPadding(dp(16), dp(10), dp(16), dp(8))
         val left = txt(if (back) "‹" else "", if (back) 36f else 20f, cream, true).apply {
             gravity = Gravity.CENTER
             if (back) setOnClickListener { dashboardScreen() }
         }
         addView(left, LinearLayout.LayoutParams(dp(34), dp(44)))
-        addView(txt(title, 22f, cream, true), LinearLayout.LayoutParams(0, -2, 1f))
+        addView(txt(title, 23f, cream, true), LinearLayout.LayoutParams(0, -2, 1f))
         if (onEdit != null) addView(txt("✎", 20f, gold, true).apply {
             gravity = Gravity.CENTER; setPadding(dp(9), dp(8), dp(9), dp(8)); setOnClickListener { onEdit() }
         })
@@ -210,9 +217,12 @@ class MainActivity : AppCompatActivity() {
         col.addView(topBar("DREAM", showLanguage = true))
 
         val hero = FrameLayout(this).apply {
-            background = solid(surface, 22)
+            background = gradient(intArrayOf(Color.rgb(9, 21, 36), Color.rgb(17, 28, 40)), 24, GradientDrawable.Orientation.TL_BR).apply {
+                setStroke(dp(1), Color.rgb(59, 67, 76))
+            }
             clipToOutline = true
-            layoutParams = LinearLayout.LayoutParams(-1, dp(210)).apply { setMargins(dp(16), dp(4), dp(16), dp(18)) }
+            elevation = dp(8).toFloat()
+            layoutParams = LinearLayout.LayoutParams(-1, dp(224)).apply { setMargins(dp(16), dp(5), dp(16), dp(20)) }
         }
         hero.addView(DreamScenicView(this), FrameLayout.LayoutParams(-1, -1))
         hero.addView(LinearLayout(this).apply {
@@ -225,7 +235,7 @@ class MainActivity : AppCompatActivity() {
         }, FrameLayout.LayoutParams(-1, -1))
         col.addView(hero)
 
-        col.addView(txt(tr("Vytvor svoj DREAM", "Create your DREAM"), 23f, cream, true).apply { setPadding(dp(16), dp(2), 0, dp(4)) })
+        col.addView(txt(tr("Vytvor svoj DREAM", "Create your DREAM"), 25f, cream, true).apply { setPadding(dp(16), dp(2), 0, dp(5)) })
         col.addView(txt(tr("Jeden jasný cieľ. Každý deň o krok bližšie.", "One clear goal. One step closer every day."), 14f, muted).apply { setPadding(dp(16), 0, dp(16), dp(12)) })
         val goal = input(tr("Názov cieľa", "Goal name"), false, scroll)
         val target = input(tr("Cieľová suma", "Target amount"), true, scroll)
@@ -321,7 +331,10 @@ class MainActivity : AppCompatActivity() {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         setPadding(dp(13), dp(12), dp(13), dp(12))
-        background = solid(surface2, 16, line)
+        background = gradient(intArrayOf(Color.rgb(24, 36, 51), Color.rgb(14, 25, 38)), 17, GradientDrawable.Orientation.TL_BR).apply {
+            setStroke(dp(1), line)
+        }
+        elevation = dp(5).toFloat()
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { setMargins(dp(16), dp(4), dp(16), dp(8)) }
         addView(GoalThumbView(this@MainActivity), LinearLayout.LayoutParams(dp(60), dp(60)))
         addView(LinearLayout(this@MainActivity).apply {
@@ -460,12 +473,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun bottomNav(active: Int) = LinearLayout(this).apply {
         orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER
-        setPadding(dp(6), dp(5), dp(6), dp(5)); background = solid(Color.rgb(8, 18, 30), 0, Color.rgb(34, 45, 59))
+        setPadding(dp(6), dp(6), dp(6), dp(6)); background = gradient(
+            intArrayOf(Color.rgb(14, 25, 38), Color.rgb(7, 16, 27)), 0,
+            GradientDrawable.Orientation.TOP_BOTTOM
+        ).apply { setStroke(dp(1), Color.rgb(38, 50, 64)) }
         val labels = arrayOf(tr("⌂\nPrehľad", "⌂\nOverview"), tr("◷\nHistória", "◷\nHistory"), tr("▣\nDenná suma", "▣\nDaily"), tr("♙\nProfil", "♙\nProfile"))
         labels.forEachIndexed { i, label ->
             addView(txt(label, 10f, if (i == active) gold2 else muted, i == active).apply {
                 gravity = Gravity.CENTER; setOnClickListener { when (i) { 0 -> dashboardScreen(); 1 -> historyScreen(); 2 -> dailyScreen(); 3 -> settingsScreen() } }
-            }, LinearLayout.LayoutParams(0, dp(52), 1f))
+            }, LinearLayout.LayoutParams(0, dp(56), 1f))
         }
     }
 
