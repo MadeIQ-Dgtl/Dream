@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dream-premium-visual-20260901
   workflow_dispatch:
 
 jobs:
