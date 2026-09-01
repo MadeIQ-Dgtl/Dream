@@ -283,14 +283,30 @@ class MainActivity : AppCompatActivity() {
         col.addView(topBar(tr("Prehľad", "Overview"), showLanguage = true, onEdit = { editGoal() }))
 
         col.addView(card(18).apply {
-            addView(txt(tr("CELKOVO ODLOŽENÉ", "TOTAL SAVED"), 11f, muted, true))
-            addView(LinearLayout(this@MainActivity).apply {
-                orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL
-                addView(txt(money(d.saved), 29f, cream, true), LinearLayout.LayoutParams(0, -2, 1f))
-                addView(txt("${d.pct.toInt()}%", 13f, gold2, true).apply { background = solid(Color.rgb(62, 52, 35), 14); setPadding(dp(10), dp(6), dp(10), dp(6)) })
+            gravity = Gravity.CENTER_HORIZONTAL
+            addView(txt(tr("CELKOVO ODLOŽENÉ", "TOTAL SAVED"), 11f, muted, true).apply {
+                gravity = Gravity.CENTER
             })
-            addView(txt(tr("Tvoj pokrok rastie", "Your progress is growing"), 13f, muted).apply { setPadding(0, dp(7), 0, dp(6)) })
-            addView(TrendView(this@MainActivity), LinearLayout.LayoutParams(-1, dp(72)))
+            addView(txt(money(d.saved), 29f, cream, true).apply {
+                gravity = Gravity.CENTER
+                setPadding(0, dp(3), 0, dp(4))
+            })
+            addView(
+                CircularProgressView(
+                    this@MainActivity,
+                    d.pct.toFloat(),
+                    gold,
+                    Color.rgb(48, 55, 65),
+                    "${d.pct.toInt()}%",
+                    tr("SPLNENÉ Z CIEĽA", "OF GOAL COMPLETED")
+                ),
+                LinearLayout.LayoutParams(dp(176), dp(176)).apply { gravity = Gravity.CENTER_HORIZONTAL }
+            )
+            addView(txt(tr("Každý vklad ťa približuje k cieľu.", "Every saving moves you closer to your goal."), 13f, muted).apply {
+                gravity = Gravity.CENTER
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+                setPadding(0, dp(5), 0, 0)
+            })
         })
 
         col.addView(txt(tr("TVOJ CIEĽ", "YOUR GOAL"), 12f, cream, true).apply { setPadding(dp(16), dp(12), 0, dp(3)) })
@@ -328,7 +344,7 @@ class MainActivity : AppCompatActivity() {
         col.addView(topBar(tr("Koľko treba denne odložiť?", "How much to save daily?"), back = true))
         col.addView(card(22).apply {
             gravity = Gravity.CENTER_HORIZONTAL
-            addView(CircularProgressView(this@MainActivity, d.pct.toFloat(), gold, Color.rgb(48, 55, 65), money(d.daily)), LinearLayout.LayoutParams(dp(220), dp(220)).apply { gravity = Gravity.CENTER_HORIZONTAL })
+            addView(CircularProgressView(this@MainActivity, d.pct.toFloat(), gold, Color.rgb(48, 55, 65), money(d.daily), tr("DENNE TREBA ODLOŽIŤ", "SAVE PER DAY")), LinearLayout.LayoutParams(dp(220), dp(220)).apply { gravity = Gravity.CENTER_HORIZONTAL })
         })
         col.addView(card().apply {
             addMetricLine(tr("Cieľová suma", "Target amount"), money(d.target))
@@ -524,13 +540,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class CircularProgressView(context: Context, private val progress: Float, private val active: Int, private val track: Int, private val centerText: String) : View(context) {
+    class CircularProgressView(context: Context, private val progress: Float, private val active: Int, private val track: Int, private val centerText: String, private val caption: String) : View(context) {
         private val p = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND }
         override fun onDraw(c: Canvas) {
             val w=width.toFloat(); val h=height.toFloat(); val stroke=w*.045f; p.strokeWidth=stroke; val r=RectF(stroke,stroke,w-stroke,h-stroke)
             p.color=track; c.drawArc(r,-215f,250f,false,p); p.color=active; c.drawArc(r,-215f,250f*(progress.coerceIn(0f,100f)/100f),false,p)
             p.style=Paint.Style.FILL; p.textAlign=Paint.Align.CENTER; p.typeface=Typeface.DEFAULT_BOLD; p.color=Color.rgb(247,242,232); p.textSize=w*.16f; c.drawText(centerText,w/2,h*.54f,p)
-            p.typeface=Typeface.DEFAULT; p.color=Color.rgb(156,164,176); p.textSize=w*.052f; c.drawText("DENNE TREBA ODLOŽIŤ",w/2,h*.38f,p); p.style=Paint.Style.STROKE
+            p.typeface=Typeface.DEFAULT; p.color=Color.rgb(156,164,176); p.textSize=w*.052f; c.drawText(caption,w/2,h*.38f,p); p.style=Paint.Style.STROKE
         }
     }
 }
